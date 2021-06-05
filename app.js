@@ -1,57 +1,57 @@
 // Require
-const express = require("express");
-const methodOverride = require("method-override");
-const expressSanitizer = require("express-sanitizer");
-const bodyParser = require("body-parser");
-const multer = require("multer");
+const express = require('express');
+const methodOverride = require('method-override');
+const expressSanitizer = require('express-sanitizer');
+const bodyParser = require('body-parser');
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const main = require('./src/main.js');
+// const main = require('./src/main.js');
 
 // Application Setup
 const app = express();
 const serverPort = 3030;
-const serverUrl = "localhost";
+const serverUrl = 'localhost';
 
 // App Configurations
-app.set("view engine", "ejs");
-app.use(express.static("public"));
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(expressSanitizer());
-app.use(methodOverride("_method"));
+app.use(methodOverride('_method'));
 
 // Multer Configurations to upload file
-var storage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads");
+    cb(null, './uploads');
   },
   filename: function (req, file, cb) {
-    cb(null, "file.txt");
+    cb(null, 'file.txt');
   }
 });
 
-var upload = multer({
+const upload = multer({
   storage: storage,
   fileFilter: function (req, file, callback) {
-    var ext = path.extname(file.originalname);
+    const ext = path.extname(file.originalname);
     if (ext !== '.txt') {
-      return callback(new Error('Only text files are allowed'))
+      return callback(new Error('Only text files are allowed'));
     }
-    callback(null, true)
+    callback(null, true);
   }
-}).single("txtFile");
+}).single('txtFile');
 
 // Routes
 
 // Index Route
-app.get("/", function (req, res) {
-  res.render("index");
+app.get('/', function (req, res) {
+  res.render('index');
 });
 
 // Upload a new file
-app.post("/uploadFile", function (req, res) {
+app.post('/uploadFile', function (req, res) {
   upload(req, res, function (err) {
     if (err) {
       const errMsg = `Could not upload text file ${JSON.stringify(err)} ${err}`;
@@ -65,8 +65,8 @@ app.post("/uploadFile", function (req, res) {
 });
 
 // Not Found Route
-app.get("*", function (req, res) {
-  res.render("notFound");
+app.get('*', function (req, res) {
+  res.render('notFound');
 });
 
 // Start server on specified url and port
