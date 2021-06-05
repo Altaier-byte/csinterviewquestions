@@ -21,7 +21,6 @@ GRANT ALL ON DATABASE csinterviewquestions TO postgres;
 GRANT TEMPORARY, CONNECT ON DATABASE csinterviewquestions TO PUBLIC;
 
 -----------------------------------------
-
 -- Table: public.users
 
 -- DROP TABLE public.users;
@@ -29,10 +28,8 @@ GRANT TEMPORARY, CONNECT ON DATABASE csinterviewquestions TO PUBLIC;
 CREATE TABLE IF NOT EXISTS public.users
 (
     email text COLLATE pg_catalog."default" NOT NULL,
-    ip inet,
-    banned_post boolean NOT NULL DEFAULT false,
-    banned_comment boolean NOT NULL DEFAULT false,
-    banned_report boolean NOT NULL DEFAULT false,
+    ip inet NOT NULL,
+    banned boolean NOT NULL DEFAULT false,
     refresh_token text COLLATE pg_catalog."default",
     CONSTRAINT users_email_pk PRIMARY KEY (email)
 )
@@ -147,4 +144,28 @@ CREATE TABLE IF NOT EXISTS public.comment_reports
 TABLESPACE pg_default;
 
 ALTER TABLE public.comment_reports
+    OWNER to postgres;
+
+-----------------------------------------
+-- Table: public.comment_files
+
+-- DROP TABLE public.comment_files;
+
+CREATE TABLE IF NOT EXISTS public.comment_files
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    comment_id integer NOT NULL,
+    create_date date NOT NULL,
+    original_file_name text COLLATE pg_catalog."default" NOT NULL,
+    ip inet NOT NULL,
+    CONSTRAINT comment_files_id_pk PRIMARY KEY (id),
+    CONSTRAINT comment_files_comment_id_fk FOREIGN KEY (comment_id)
+        REFERENCES public.comments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.comment_files
     OWNER to postgres;

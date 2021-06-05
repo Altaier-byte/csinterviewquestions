@@ -1,0 +1,43 @@
+posts
+- add a post
+- verify post
+- modify post (title, body, interview date, company, position)
+- delete post
+- get post
+- update post upvote
+- update post down vote
+- get all posts
+- search posts
+- get posts per company
+- get posts per title
+- get posts per interview date
+- get posts per create date
+
+post reports
+- add post report
+
+comments
+- add comment
+- verify comment
+- modify comment (body, solution, file)
+- delete comment
+- get comment
+- update post upvote
+- update post down vote
+- get all comments
+- get all solution comments
+- search comments
+
+comment_files
+- add a file
+- delete a file
+- get files
+
+comment reports
+- add comment report
+
+users
+- add user
+- delete user
+- add user ip address
+- get user
