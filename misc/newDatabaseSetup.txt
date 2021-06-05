@@ -1,0 +1,150 @@
+-- Database: csinterviewquestions
+
+-- DROP DATABASE csinterviewquestions;
+
+CREATE DATABASE csinterviewquestions
+    WITH 
+    OWNER = postgres
+    ENCODING = 'SQL_ASCII'
+    LC_COLLATE = 'C'
+    LC_CTYPE = 'C'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+
+ALTER DATABASE csinterviewquestions
+    SET search_path TO public;
+ALTER ROLE postgres IN DATABASE csinterviewquestions
+    SET search_path TO public;
+
+GRANT ALL ON DATABASE csinterviewquestions TO postgres;
+
+GRANT TEMPORARY, CONNECT ON DATABASE csinterviewquestions TO PUBLIC;
+
+-----------------------------------------
+
+-- Table: public.users
+
+-- DROP TABLE public.users;
+
+CREATE TABLE IF NOT EXISTS public.users
+(
+    email text COLLATE pg_catalog."default" NOT NULL,
+    ip inet,
+    banned_post boolean NOT NULL DEFAULT false,
+    banned_comment boolean NOT NULL DEFAULT false,
+    banned_report boolean NOT NULL DEFAULT false,
+    refresh_token text COLLATE pg_catalog."default",
+    CONSTRAINT users_email_pk PRIMARY KEY (email)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.users
+    OWNER to postgres;
+
+-----------------------------------------
+-- Table: public.posts
+
+-- DROP TABLE public.posts;
+
+CREATE TABLE IF NOT EXISTS public.posts
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    title text COLLATE pg_catalog."default" NOT NULL,
+    create_date date NOT NULL,
+    interview_date date NOT NULL,
+    company text COLLATE pg_catalog."default" NOT NULL,
+    body text COLLATE pg_catalog."default",
+    "position" text COLLATE pg_catalog."default" NOT NULL,
+    votes_up integer NOT NULL DEFAULT 0,
+    votes_down integer NOT NULL DEFAULT 0,
+    views integer,
+    status text COLLATE pg_catalog."default" NOT NULL,
+    pin text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT posts_id_pk PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.posts
+    OWNER to postgres;
+
+-----------------------------------------
+-- Table: public.post_reports
+
+-- DROP TABLE public.post_reports;
+
+CREATE TABLE IF NOT EXISTS public.post_reports
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    post_id integer NOT NULL,
+    body text COLLATE pg_catalog."default" NOT NULL,
+    create_date date NOT NULL,
+    status text COLLATE pg_catalog."default" NOT NULL,
+    email text COLLATE pg_catalog."default" NOT NULL,
+    ip inet NOT NULL,
+    CONSTRAINT post_reports_id_pk PRIMARY KEY (id),
+    CONSTRAINT post_report_post_id_fk FOREIGN KEY (post_id)
+        REFERENCES public.posts (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.post_reports
+    OWNER to postgres;
+
+-----------------------------------------
+-- Table: public.comments
+
+-- DROP TABLE public.comments;
+
+CREATE TABLE IF NOT EXISTS public.comments
+(
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    create_date date NOT NULL,
+    body text COLLATE pg_catalog."default" NOT NULL,
+    solution boolean NOT NULL DEFAULT false,
+    votes_up integer NOT NULL DEFAULT 0,
+    votes_down integer NOT NULL DEFAULT 0,
+    status text COLLATE pg_catalog."default" NOT NULL,
+    pin text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT comments_id_pk PRIMARY KEY (id),
+    CONSTRAINT comments_post_id_fk FOREIGN KEY (post_id)
+        REFERENCES public.posts (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.comments
+    OWNER to postgres;
+
+-----------------------------------------
+-- Table: public.comment_reports
+
+-- DROP TABLE public.comment_reports;
+
+CREATE TABLE IF NOT EXISTS public.comment_reports
+(
+    id integer NOT NULL,
+    comment_id integer NOT NULL,
+    body text COLLATE pg_catalog."default" NOT NULL,
+    create_date date NOT NULL,
+    status text COLLATE pg_catalog."default" NOT NULL,
+    email text COLLATE pg_catalog."default" NOT NULL,
+    ip inet NOT NULL,
+    CONSTRAINT comment_report_id_pk PRIMARY KEY (id),
+    CONSTRAINT comment_report_comment_id_fk FOREIGN KEY (comment_id)
+        REFERENCES public.comments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.comment_reports
+    OWNER to postgres;
