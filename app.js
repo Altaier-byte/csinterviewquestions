@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // Require
 const express = require('express');
 const methodOverride = require('method-override');
@@ -5,8 +7,20 @@ const expressSanitizer = require('express-sanitizer');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-// const main = require('./src/main.js');
+const cors = require('cors');
+const requestIp = require('request-ip');
+const cookieParser = require('cookie-parser');
+const { logger } = require('./src/logger');
+
+// Require routes
+// const authorizationRoutes = require('./routes/authorization');
+// const projectRoutes = require('./routes/project');
+// const userRoutes = require('./routes/userModify');
+// const convertedQueryRoutes = require('./routes/convertedQuery');
+// const searchQueryRoutes = require('./routes/searchQuery');
+// const publicationRoutes = require('./routes/publication');
+// const userProjectRequestRoutes = require('./routes/userProjectRequest');
+// const dbRoutes = require('./routes/db');
 
 // Application Setup
 const app = express();
@@ -14,6 +28,7 @@ const serverPort = 3030;
 const serverUrl = 'localhost';
 
 // App Configurations
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({
@@ -21,6 +36,9 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(expressSanitizer());
 app.use(methodOverride('_method'));
+app.use(express.json());
+app.use(requestIp.mw());
+app.use(cookieParser());
 
 // Multer Configurations to upload file
 const storage = multer.diskStorage({
@@ -46,8 +64,8 @@ const upload = multer({
 // Routes
 
 // Index Route
-app.get('/', function (req, res) {
-  res.render('index');
+app.get('/', async function (req, res) {
+  res.status(200).send('Hi from csinterviewquestions backend');
 });
 
 // Upload a new file
@@ -71,6 +89,6 @@ app.get('*', function (req, res) {
 
 // Start server on specified url and port
 app.listen(serverPort, serverUrl, function () {
-  console.log('Application started successfully...');
-  console.log(`Server can be accessed on http://${serverUrl}:${serverPort}`);
+  logger.info('Application started successfully...');
+  logger.info(`Server can be accessed on http://${serverUrl}:${serverPort}`);
 });
