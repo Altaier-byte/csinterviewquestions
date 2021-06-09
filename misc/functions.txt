@@ -37,7 +37,8 @@ comment reports
 - add comment report
 
 users
-- add user
-- delete user
-- add user ip address
+- (Done) add user
+- (Done) add user ip address
+- generate user pin
+- login user
 - get user

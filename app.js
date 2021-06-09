@@ -13,7 +13,7 @@ const cookieParser = require('cookie-parser');
 const { logger } = require('./src/logger');
 
 // Require routes
-// const authorizationRoutes = require('./routes/authorization');
+const authorizationRoutes = require('./routes/authorization');
 // const projectRoutes = require('./routes/project');
 // const userRoutes = require('./routes/userModify');
 // const convertedQueryRoutes = require('./routes/convertedQuery');
@@ -39,6 +39,7 @@ app.use(methodOverride('_method'));
 app.use(express.json());
 app.use(requestIp.mw());
 app.use(cookieParser());
+// app.use(errorHandler({ dumpExceptions: true, showStack: true }));
 
 // Multer Configurations to upload file
 const storage = multer.diskStorage({
@@ -67,6 +68,9 @@ const upload = multer({
 app.get('/', async function (req, res) {
   res.status(200).send('Hi from csinterviewquestions backend');
 });
+
+// Authentication routes
+app.use(authorizationRoutes);
 
 // Upload a new file
 app.post('/uploadFile', function (req, res) {
