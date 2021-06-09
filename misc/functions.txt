@@ -39,6 +39,10 @@ comment reports
 users
 - (Done) add user
 - (Done) add user ip address
-- generate user pin
-- login user
-- get user
+- (Done) generate user pin
+- (Done) login user
+- (Done) logout user
+- (Done) renew token by url
+- (Done) renew token by cookie
+- (Done) verify token
+- (Done) get user

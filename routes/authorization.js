@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { logger } = require('../src/logger');
-const authorizationSrc = require('../src/usersSrc');
+const authorizationSrc = require('../src/authorizationSrc');
 
 /**
  * Custom function to call src file
@@ -55,8 +55,36 @@ const callSrcFile = async function callSrc(functionName, parameters, req, res, s
 /**
  * @summary Register new users
  */
-router.post('/register', async (req, res) => {
+router.post('/generateUserPin', async (req, res) => {
   callSrcFile('generateUserPin', [req], req, res);
+});
+
+/**
+ * @summary Login user
+ */
+router.post('/login', async (req, res) => {
+  callSrcFile('login', [req], req, res);
+});
+
+/**
+ * @summary Logout and delete the stored refresh token
+ */
+router.delete('/logout', async (req, res) => {
+  callSrcFile('logout', [req], req, res, false);
+});
+
+/**
+ * @summary Get a new access token using existing refresh token
+ */
+router.post('/renewToken', async (req, res) => {
+  callSrcFile('renewToken', [req], req, res);
+});
+
+/**
+ * @summary Get a new access token using existing refresh token cookie
+ */
+router.post('/renewTokenByCookie', async (req, res) => {
+  callSrcFile('renewTokenByCookie', [req], req, res);
 });
 
 module.exports = router;
