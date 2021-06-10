@@ -8,10 +8,10 @@ posts
 - (Done) increase post views
 - (Done) get all posts
 - search posts
-- get posts per company
-- get posts per position
-- get all companies
-- get all positions
+- (Done) get posts by a company
+- (Done) get posts by a position
+- (Done) get all companies
+- (Done) get all positions
 
 post reports
 - add post report

@@ -271,7 +271,7 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
 
 /**
  * @function getAllPostsExternal
- * @summary Get a post from database
+ * @summary Get all posts from database
  * @param {string} sortKey Sort key (create_date, interview_date or views)
  * @param {string} sortOrder Sort order (asc or desc)
  * @param {number} limit
@@ -307,10 +307,144 @@ const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrde
   }
 };
 
+/**
+ * @function getAllCompanyPostsExternal
+ * @summary Get all company's posts from database
+ * @param {string} sortKey Sort key (create_date, interview_date or views)
+ * @param {string} sortOrder Sort order (asc or desc)
+ * @param {number} limit
+ * @param {number} offset
+ * @param {string} company Company name
+ * @param {object} user User information
+ * @returns {object} getPostsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sortKey, sortOrder, limit, offset, company, user) {
+  try {
+    if (!sortKey || !sortOrder || !limit || !offset || !company) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a company' };
+
+    if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
+
+    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+
+    if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
+
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where company=$1 order by ${sortKey} ${sortOrder} limit=$2 offset=$3`, [company, limit, offset]);
+    logger.debug({ label: 'get all company posts query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all company posts';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
+/**
+ * @function getAllPositionPostsExternal
+ * @summary Get all company's posts from database
+ * @param {string} sortKey Sort key (create_date, interview_date or views)
+ * @param {string} sortOrder Sort order (asc or desc)
+ * @param {number} limit
+ * @param {number} offset
+ * @param {string} position Company name
+ * @param {object} user User information
+ * @returns {object} getPostsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getAllPositionPostsExternal = async function getAllPositionPostsExternal(sortKey, sortOrder, limit, offset, position, user) {
+  try {
+    if (!sortKey || !sortOrder || !limit || !offset || !position) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a position' };
+
+    if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
+
+    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+
+    if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
+
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 order by ${sortKey} ${sortOrder} limit=$2 offset=$3`, [position, limit, offset]);
+    logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all position posts';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
+/**
+ * @function getCompaniesExternal
+ * @summary Get a list of all companies from database
+ * @param {object} user User information
+ * @returns {object} getCompaniesResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getCompaniesExternal = async function getCompaniesExternal(user) {
+  try {
+    const queryResults = await db.query('select distinct(company) from posts', []);
+    logger.debug({ label: 'get all companies query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all companies';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
+/**
+ * @function getPositionsExternal
+ * @summary Get a list of all positions from database
+ * @param {object} user User information
+ * @returns {object} getPositionsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getPositionsExternal = async function getPositionsExternal(user) {
+  try {
+    const queryResults = await db.query('select distinct(position) from posts', []);
+    logger.debug({ label: 'get all positions query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all positions';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
 module.exports = {
   newPost,
   deletePost,
   getPostExternal,
   modifyPost,
-  getAllPostsExternal
+  getAllPostsExternal,
+  getAllCompanyPostsExternal,
+  getAllPositionPostsExternal,
+  getCompaniesExternal,
+  getPositionsExternal
 };

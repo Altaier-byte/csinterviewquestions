@@ -100,4 +100,34 @@ router.post('/posts/all', async (req, res) => {
   callSrcFile('getAllPostsExternal', [sortKey, sortOrder, limit, offset], req, res);
 });
 
+/**
+ * @summary Get all company posts
+ */
+router.post('/posts/company', async (req, res) => {
+  const { sortKey, sortOrder, limit, offset, company } = req.body;
+  callSrcFile('getAllCompanyPostsExternal', [sortKey, sortOrder, limit, offset, company], req, res);
+});
+
+/**
+ * @summary Get all position posts
+ */
+router.post('/posts/position', async (req, res) => {
+  const { sortKey, sortOrder, limit, offset, position } = req.body;
+  callSrcFile('getAllPositionPostsExternal', [sortKey, sortOrder, limit, offset, position], req, res);
+});
+
+/**
+ * @summary Get all companies
+ */
+router.get('/posts/companies', async (req, res) => {
+  callSrcFile('getCompaniesExternal', [], req, res);
+});
+
+/**
+ * @summary Get all positions
+ */
+router.get('/posts/positions', async (req, res) => {
+  callSrcFile('getPositionsExternal', [], req, res);
+});
+
 module.exports = router;
