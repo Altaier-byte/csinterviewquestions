@@ -6,7 +6,7 @@ posts
 - (On hold - Don't implement) post upvote
 - (On hold - Don't implement) post down vote
 - (Done) increase post views
-- get all posts
+- (Done) get all posts
 - search posts
 - get posts per company
 - get posts per title
