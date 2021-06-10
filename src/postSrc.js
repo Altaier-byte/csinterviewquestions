@@ -124,10 +124,10 @@ const getPost = async function getPost(postId) {
  * @summary Get a post from database
  * @param {number} postId Post's id
  * @param {object} user User information
- * @returns {object} newPostResults
+ * @returns {object} getPostResults
  * @throws {object} errorCodeAndMsg
  */
-const getPostExternal = async function getPostExternal(postId) {
+const getPostExternal = async function getPostExternal(postId, user) {
   try {
     if (!postId) throw { code: 400, message: 'Please provide a post id' };
 
@@ -269,9 +269,48 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
   }
 };
 
+/**
+ * @function getAllPostsExternal
+ * @summary Get a post from database
+ * @param {string} sortKey Sort key (create_date, interview_date or views)
+ * @param {string} sortOrder Sort order (asc or desc)
+ * @param {number} limit
+ * @param {number} offset
+ * @param {object} user User information
+ * @returns {object} getPostsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrder, limit, offset, user) {
+  try {
+    if (!sortKey || !sortOrder || !limit || !offset) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit and an offset' };
+
+    if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
+
+    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+
+    if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
+
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts order by ${sortKey} ${sortOrder} limit=$1 offset=$2`, [limit, offset]);
+    logger.debug({ label: 'get all posts query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all posts';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
 module.exports = {
   newPost,
   deletePost,
   getPostExternal,
-  modifyPost
+  modifyPost,
+  getAllPostsExternal
 };

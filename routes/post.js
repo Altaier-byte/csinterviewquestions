@@ -92,4 +92,12 @@ router.put('/posts', async (req, res) => {
   callSrcFile('modifyPost', [postId, postPin, title, interviewDate, company, position, body], req, res);
 });
 
+/**
+ * @summary Get all posts
+ */
+router.post('/posts/all', async (req, res) => {
+  const { sortKey, sortOrder, limit, offset } = req.body;
+  callSrcFile('getAllPostsExternal', [sortKey, sortOrder, limit, offset], req, res);
+});
+
 module.exports = router;

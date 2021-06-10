@@ -1,6 +1,6 @@
 posts
 - (Done) add a post
-- modify post (title, body, interview date, company, position)
+- (Done) modify post (title, body, interview date, company, position)
 - (Done) delete post
 - (Done) get post
 - (On hold - Don't implement) post upvote
