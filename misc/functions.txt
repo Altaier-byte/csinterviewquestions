@@ -9,9 +9,9 @@ posts
 - (Done) get all posts
 - search posts
 - get posts per company
-- get posts per title
-- get posts per interview date
-- get posts per create date
+- get posts per position
+- get all companies
+- get all positions
 
 post reports
 - add post report
