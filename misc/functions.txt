@@ -1,11 +1,11 @@
 posts
-- add a post
-- verify post
+- (Done) add a post
 - modify post (title, body, interview date, company, position)
-- delete post
-- get post
-- update post upvote
-- update post down vote
+- (Done) delete post
+- (Done) get post
+- (On hold - Don't implement) post upvote
+- (On hold - Don't implement) post down vote
+- (Done) increase post views
 - get all posts
 - search posts
 - get posts per company

@@ -14,7 +14,7 @@ const { logger } = require('./src/logger');
 
 // Require routes
 const authorizationRoutes = require('./routes/authorization');
-// const projectRoutes = require('./routes/project');
+const postRoutes = require('./routes/post');
 // const userRoutes = require('./routes/userModify');
 // const convertedQueryRoutes = require('./routes/convertedQuery');
 // const searchQueryRoutes = require('./routes/searchQuery');
@@ -71,6 +71,9 @@ app.get('/', async function (req, res) {
 
 // Authentication routes
 app.use(authorizationRoutes);
+
+// Post routes
+app.use(postRoutes);
 
 // Upload a new file
 app.post('/uploadFile', function (req, res) {
