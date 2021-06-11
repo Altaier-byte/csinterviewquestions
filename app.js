@@ -15,6 +15,7 @@ const { logger } = require('./src/logger');
 // Require routes
 const authorizationRoutes = require('./routes/authorization');
 const postRoutes = require('./routes/post');
+const commentsRoutes = require('./routes/comments');
 // const userRoutes = require('./routes/userModify');
 // const convertedQueryRoutes = require('./routes/convertedQuery');
 // const searchQueryRoutes = require('./routes/searchQuery');
@@ -74,6 +75,9 @@ app.use(authorizationRoutes);
 
 // Post routes
 app.use(postRoutes);
+
+// Comments routes
+app.use(commentsRoutes);
 
 // Upload a new file
 app.post('/uploadFile', function (req, res) {

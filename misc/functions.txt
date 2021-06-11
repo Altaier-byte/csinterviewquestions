@@ -17,14 +17,14 @@ post reports
 - add post report
 
 comments
-- add comment
-- modify comment (body, solution, file)
-- delete comment
-- get comment
+- (Done) add comment
+- (Done) modify comment (body, solution, file)
+- (Done) delete comment
+- (Done) get comment
 - (On hold - Don't implement) comment upvote
 - (On hold - Don't implement) comment down vote
-- get all comments for a post
-- get all solution comments for a post
+- (Done) get all comments for a post
+- (Done) get all solution comments for a post
 - search comments
 
 comment_files

@@ -23,7 +23,7 @@ const newPost = async function newPost(title, interviewDate, company, position, 
   try {
     // Check if there is no email or password
     if (!title || !interviewDate || !company || !position) {
-      throw { code: 400, message: 'Please provide project title, interview date, company, position' };
+      throw { code: 400, message: 'Please provide title, interview date, company, position' };
     }
 
     title = filter.clean(title);
@@ -42,7 +42,7 @@ const newPost = async function newPost(title, interviewDate, company, position, 
 
     // Create a new post in the databsae
     const postQuery = await db.query('insert into posts(title, interview_date, company, position, body, status, pin, create_date) VALUES($1, $2, $3, $4, $5, $6, $7, $8) returning id', [title, interviewDate, company, position, body, 'published', pinHashed, createDate]);
-    logger.debug({ label: 'create new project query response', results: postQuery.rows });
+    logger.debug({ label: 'create new post query response', results: postQuery.rows });
 
     // Send an email with the pin
     const subject = 'Post Published - You\'re Admin PIN is Here!';
@@ -181,7 +181,7 @@ const deletePost = async function deletePost(postId, postPin, user) {
       logger.error(error);
       throw error;
     }
-    const userMsg = 'Could not delete project';
+    const userMsg = 'Could not delete post';
     logger.error({ userMsg, error });
     throw { code: 500, message: userMsg };
   }
@@ -263,7 +263,7 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
       logger.error(error);
       throw error;
     }
-    const userMsg = 'Could not update project';
+    const userMsg = 'Could not update post';
     logger.error({ userMsg, error });
     throw { code: 500, message: userMsg };
   }
@@ -325,7 +325,7 @@ const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sor
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
-    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+    if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
@@ -364,7 +364,7 @@ const getAllPositionPostsExternal = async function getAllPositionPostsExternal(s
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
-    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+    if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
