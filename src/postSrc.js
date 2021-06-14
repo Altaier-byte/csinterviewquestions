@@ -282,7 +282,7 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
  */
 const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrder, limit, offset, user) {
   try {
-    if (!sortKey || !sortOrder || !limit || !offset) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit and an offset' };
+    if (!sortKey || !sortOrder || !limit || (!offset && offset !== 0)) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit and an offset' };
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
@@ -290,7 +290,7 @@ const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrde
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts order by ${sortKey} ${sortOrder} limit=$1 offset=$2`, [limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts order by ${sortKey} ${sortOrder} limit $1 offset $2`, [limit, offset]);
     logger.debug({ label: 'get all posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -321,7 +321,7 @@ const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrde
  */
 const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sortKey, sortOrder, limit, offset, company, user) {
   try {
-    if (!sortKey || !sortOrder || !limit || !offset || !company) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a company' };
+    if (!sortKey || !sortOrder || !limit || (!offset && offset !== 0) || !company) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a company' };
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
@@ -329,7 +329,7 @@ const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sor
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where company=$1 order by ${sortKey} ${sortOrder} limit=$2 offset=$3`, [company, limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where company=$1 order by ${sortKey} ${sortOrder} limit $2 offset $3`, [company, limit, offset]);
     logger.debug({ label: 'get all company posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -360,7 +360,7 @@ const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sor
  */
 const getAllPositionPostsExternal = async function getAllPositionPostsExternal(sortKey, sortOrder, limit, offset, position, user) {
   try {
-    if (!sortKey || !sortOrder || !limit || !offset || !position) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a position' };
+    if (!sortKey || !sortOrder || !limit || (!offset && offset !== 0) || !position) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a position' };
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
@@ -368,7 +368,7 @@ const getAllPositionPostsExternal = async function getAllPositionPostsExternal(s
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 order by ${sortKey} ${sortOrder} limit=$2 offset=$3`, [position, limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 order by ${sortKey} ${sortOrder} limit $2 offset $3`, [position, limit, offset]);
     logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -394,11 +394,11 @@ const getAllPositionPostsExternal = async function getAllPositionPostsExternal(s
  */
 const getCompaniesExternal = async function getCompaniesExternal(user) {
   try {
-    const queryResults = await db.query('select distinct(company) from posts', []);
+    const queryResults = await db.query('select distinct(company) from posts order by company asc', []);
     logger.debug({ label: 'get all companies query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
-      return queryResults.rows;
+      return queryResults.rows.map((item) => item.company);
     } else return false;
   } catch (error) {
     if (error.code && isHttpErrorCode(error.code)) {
@@ -420,11 +420,11 @@ const getCompaniesExternal = async function getCompaniesExternal(user) {
  */
 const getPositionsExternal = async function getPositionsExternal(user) {
   try {
-    const queryResults = await db.query('select distinct(position) from posts', []);
+    const queryResults = await db.query('select distinct(position) from posts order by position asc', []);
     logger.debug({ label: 'get all positions query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
-      return queryResults.rows;
+      return queryResults.rows.map((item) => item.position);
     } else return false;
   } catch (error) {
     if (error.code && isHttpErrorCode(error.code)) {

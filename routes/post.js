@@ -10,10 +10,13 @@ const postSrc = require('../src/postSrc');
  * @param {array} parameters Variables to send with the function
  * @returns {object} response
  */
-const callSrcFile = async function callSrc(functionName, parameters, req, res) {
+const callSrcFile = async function callSrc(functionName, parameters, req, res, skipVerify = false) {
   let userCheckPass = false;
   try {
-    const user = await authorizationSrc.verifyToken(req);
+    let user = {};
+    if (!skipVerify) {
+      user = await authorizationSrc.verifyToken(req);
+    }
     userCheckPass = true;
     const data = await postSrc[functionName].apply(this, [...parameters, user]);
     res.status(200).json({
@@ -62,7 +65,7 @@ router.post('/posts', async (req, res) => {
  */
 router.get('/posts/:postId', async (req, res) => {
   const { postId } = req.params;
-  callSrcFile('getPostExternal', [postId], req, res);
+  callSrcFile('getPostExternal', [postId], req, res, true);
 });
 
 /**
@@ -97,7 +100,7 @@ router.put('/posts', async (req, res) => {
  */
 router.post('/posts/all', async (req, res) => {
   const { sortKey, sortOrder, limit, offset } = req.body;
-  callSrcFile('getAllPostsExternal', [sortKey, sortOrder, limit, offset], req, res);
+  callSrcFile('getAllPostsExternal', [sortKey, sortOrder, limit, offset], req, res, true);
 });
 
 /**
@@ -105,7 +108,7 @@ router.post('/posts/all', async (req, res) => {
  */
 router.post('/posts/company', async (req, res) => {
   const { sortKey, sortOrder, limit, offset, company } = req.body;
-  callSrcFile('getAllCompanyPostsExternal', [sortKey, sortOrder, limit, offset, company], req, res);
+  callSrcFile('getAllCompanyPostsExternal', [sortKey, sortOrder, limit, offset, company], req, res, true);
 });
 
 /**
@@ -113,21 +116,21 @@ router.post('/posts/company', async (req, res) => {
  */
 router.post('/posts/position', async (req, res) => {
   const { sortKey, sortOrder, limit, offset, position } = req.body;
-  callSrcFile('getAllPositionPostsExternal', [sortKey, sortOrder, limit, offset, position], req, res);
+  callSrcFile('getAllPositionPostsExternal', [sortKey, sortOrder, limit, offset, position], req, res, true);
 });
 
 /**
  * @summary Get all companies
  */
-router.get('/posts/companies', async (req, res) => {
-  callSrcFile('getCompaniesExternal', [], req, res);
+router.get('/companies', async (req, res) => {
+  callSrcFile('getCompaniesExternal', [], req, res, true);
 });
 
 /**
  * @summary Get all positions
  */
-router.get('/posts/positions', async (req, res) => {
-  callSrcFile('getPositionsExternal', [], req, res);
+router.get('/positions', async (req, res) => {
+  callSrcFile('getPositionsExternal', [], req, res, true);
 });
 
 module.exports = router;
