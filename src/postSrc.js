@@ -348,12 +348,12 @@ const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sor
 
 /**
  * @function getAllPositionPostsExternal
- * @summary Get all company's posts from database
+ * @summary Get all positions's posts from database
  * @param {string} sortKey Sort key (create_date, interview_date or views)
  * @param {string} sortOrder Sort order (asc or desc)
  * @param {number} limit
  * @param {number} offset
- * @param {string} position Company name
+ * @param {string} position Position name
  * @param {object} user User information
  * @returns {object} getPostsResults
  * @throws {object} errorCodeAndMsg
@@ -369,6 +369,46 @@ const getAllPositionPostsExternal = async function getAllPositionPostsExternal(s
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
     const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 order by ${sortKey} ${sortOrder} limit $2 offset $3`, [position, limit, offset]);
+    logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
+
+    if (queryResults && queryResults.rows[0]) {
+      return queryResults.rows;
+    } else return false;
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get all position posts';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
+/**
+ * @function getAllPositionCompanyPostsExternal
+ * @summary Get all position's company's posts from database
+ * @param {string} sortKey Sort key (create_date, interview_date or views)
+ * @param {string} sortOrder Sort order (asc or desc)
+ * @param {number} limit
+ * @param {number} offset
+ * @param {string} position Position name
+ * @param {string} position Company name
+ * @param {object} user User information
+ * @returns {object} getPostsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const getAllPositionCompanyPostsExternal = async function getAllPositionCompanyPostsExternal(sortKey, sortOrder, limit, offset, position, company, user) {
+  try {
+    if (!sortKey || !sortOrder || !limit || (!offset && offset !== 0) || !position) throw { code: 400, message: 'Please enter required sortKey (create_date, interview_date, or views), sort order (asc, or desc) limit, offset, and a position' };
+
+    if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
+
+    if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+
+    if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
+
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 and company=$2 order by ${sortKey} ${sortOrder} limit $3 offset $4`, [position, company, limit, offset]);
     logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -445,6 +485,7 @@ module.exports = {
   getAllPostsExternal,
   getAllCompanyPostsExternal,
   getAllPositionPostsExternal,
+  getAllPositionCompanyPostsExternal,
   getCompaniesExternal,
   getPositionsExternal
 };

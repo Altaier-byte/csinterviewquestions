@@ -120,6 +120,14 @@ router.post('/posts/position', async (req, res) => {
 });
 
 /**
+ * @summary Get all position posts for a company
+ */
+router.post('/posts/position/company', async (req, res) => {
+  const { sortKey, sortOrder, limit, offset, position, company } = req.body;
+  callSrcFile('getAllPositionCompanyPostsExternal', [sortKey, sortOrder, limit, offset, position, company], req, res, true);
+});
+
+/**
  * @summary Get all companies
  */
 router.get('/companies', async (req, res) => {
