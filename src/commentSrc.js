@@ -39,6 +39,7 @@ const newComment = async function newComment(postId, body, solution, user) {
     // Send an email with the pin
     const subject = 'Comment Published - You\'re Admin PIN is Here!';
     const message = `You're comment is published, please use this PIN to edit or delete your comment in the future!
+    Comment Id: ${commentQuery.rows[0].id}
     Comment PIN: ${pin}`;
     const sendEmail = await sendEmailText(user.email, subject, message);
 
