@@ -19,7 +19,7 @@ const { isHttpErrorCode, sendEmailText } = require('./tools');
  */
 const newComment = async function newComment(postId, body, solution, user) {
   try {
-    if (!postId || !body || !solution) throw { code: 400, message: 'Please provide post id, body, and solution.' };
+    if (!postId || !body || (solution !== true && solution !== false)) throw { code: 400, message: 'Please provide post id, body, and solution.' };
 
     body = filter.clean(body);
 
@@ -233,13 +233,13 @@ const modifyComment = async function modifyComment(commentId, commentPin, body, 
  */
 const getAllPostCommentsExternal = async function getAllPostCommentsExternal(postId, sortOrder, limit, offset, user) {
   try {
-    if (!postId || !sortOrder || !limit || !offset) throw { code: 400, message: 'Please enter required postId, sort order (asc, or desc) limit, offset, and a company' };
+    if (!postId || !sortOrder || !limit || (!offset && offset !== 0)) throw { code: 400, message: 'Please enter required postId, sort order (asc, or desc) limit, and offset' };
 
     if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 order by create_date ${sortOrder} limit=$2 offset=$3`, [postId, limit, offset]);
+    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
     logger.debug({ label: 'get all post comments query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -269,13 +269,13 @@ const getAllPostCommentsExternal = async function getAllPostCommentsExternal(pos
  */
 const getAllPostSolutionsExternal = async function getAllPostSolutionsExternal(postId, sortOrder, limit, offset, user) {
   try {
-    if (!postId || !sortOrder || !limit || !offset) throw { code: 400, message: 'Please enter required postId, sort order (asc, or desc) limit, offset, and a company' };
+    if (!postId || !sortOrder || !limit || (!offset && offset !== 0)) throw { code: 400, message: 'Please enter required postId, sort order (asc, or desc) limit, offset, and a company' };
 
     if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 and solution=true order by create_date ${sortOrder} limit=$2 offset=$3`, [postId, limit, offset]);
+    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 and solution=true order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
     logger.debug({ label: 'get all post solutions query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {

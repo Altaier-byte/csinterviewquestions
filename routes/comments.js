@@ -10,10 +10,13 @@ const commentSrc = require('../src/commentSrc');
  * @param {array} parameters Variables to send with the function
  * @returns {object} response
  */
-const callSrcFile = async function callSrc(functionName, parameters, req, res) {
+const callSrcFile = async function callSrc(functionName, parameters, req, res, skipVerify = false) {
   let userCheckPass = false;
   try {
-    const user = await authorizationSrc.verifyToken(req);
+    let user = {};
+    if (!skipVerify) {
+      user = await authorizationSrc.verifyToken(req);
+    }
     userCheckPass = true;
     const data = await commentSrc[functionName].apply(this, [...parameters, user]);
     res.status(200).json({
@@ -60,7 +63,7 @@ router.post('/comments', async (req, res) => {
  */
 router.get('/comments/:commentId', async (req, res) => {
   const { commentId } = req.params;
-  callSrcFile('getCommentExternal', [commentId], req, res);
+  callSrcFile('getCommentExternal', [commentId], req, res, true);
 });
 
 /**
@@ -92,7 +95,7 @@ router.put('/comments', async (req, res) => {
  */
 router.post('/comments/post', async (req, res) => {
   const { postId, sortOrder, limit, offset } = req.body;
-  callSrcFile('getAllPostCommentsExternal', [postId, sortOrder, limit, offset], req, res);
+  callSrcFile('getAllPostCommentsExternal', [postId, sortOrder, limit, offset], req, res, true);
 });
 
 /**
@@ -100,7 +103,7 @@ router.post('/comments/post', async (req, res) => {
  */
 router.post('/comments/post/solutions', async (req, res) => {
   const { postId, sortOrder, limit, offset } = req.body;
-  callSrcFile('getAllPostSolutionsExternal', [postId, sortOrder, limit, offset], req, res);
+  callSrcFile('getAllPostSolutionsExternal', [postId, sortOrder, limit, offset], req, res, true);
 });
 
 module.exports = router;
