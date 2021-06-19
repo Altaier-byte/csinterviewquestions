@@ -286,7 +286,7 @@ const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrde
 
     if (sortKey !== 'create_date' && sortKey !== 'interview_date' && sortKey !== 'views') throw { code: 400, message: 'Please select required sortKey (create_date, interview_date, or views)' };
 
-    if (sortOrder !== 'asc' && sortKey !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
+    if (sortOrder !== 'asc' && sortOrder !== 'desc') throw { code: 400, message: 'Please select required sortOrder (asc or desc)' };
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 

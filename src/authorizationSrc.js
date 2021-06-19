@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
+const randomstring = require('randomstring');
+const bcrypt = require('bcrypt');
 const { logger } = require('./logger');
 const { isHttpErrorCode, sendEmailText } = require('./tools');
 const db = require('../db/db');
 
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
-const pinTokenSecret = process.env.PIN_TOKEN_SECRET;
 
 /**
  * @function addUserIP
@@ -38,7 +39,7 @@ const getUser = async function getUser(email) {
   // Check if there is no email
   if (!email) throw { code: 400, message: 'Please provide an email' };
 
-  const queryResults = await db.query('select email, banned, pin from users where email=$1', [email]);
+  const queryResults = await db.query('select email, banned, pin, username from users where email=$1', [email]);
   logger.debug({ label: 'get user query response', results: queryResults.rows });
 
   if (queryResults && queryResults.rows[0]) return queryResults.rows[0];
@@ -53,12 +54,12 @@ const getUser = async function getUser(email) {
  * @returns {object} registerUserResults
  * @throws {boolean} false
  */
-const registerUser = async function registerUser(email, ip) {
+const registerUser = async function registerUser(email, username, ip) {
   // Check if there is no email or ip
   if (!email || !ip) throw { code: 400, message: 'Please provide required registration information' };
 
   // Create a user in the database
-  const queryResults = await db.query('insert into users(email, ip, pin) VALUES($1, $2, $3) returning email', [email, '{' + ip + '}', 'null']);
+  const queryResults = await db.query('insert into users(email, ip, username, pin) VALUES($1, $2, $3, $4) returning email', [email, '{' + ip + '}', username, 'null']);
   logger.debug({ label: 'registration query response', results: queryResults.rows });
 
   if (queryResults && queryResults.rows[0]) return queryResults.rows[0];
@@ -96,7 +97,8 @@ const generateUserPin = async function generateUserPin(req) {
   try {
     const {
       email,
-      ip
+      username,
+      ip,
     } = req.body;
 
     // Check if there is no email or ip
@@ -107,20 +109,23 @@ const generateUserPin = async function generateUserPin(req) {
 
     // If there is no user then inser it
     if (!dbUser) {
-      const newUser = await registerUser(email, ip);
+      const newUser = await registerUser(email, username, ip);
       if (!newUser) throw { code: 500, message: 'Could not register user' };
     }
 
-    // Generate a 5 minutes JWT pin
-    const newPin = await jwt.sign({ email }, pinTokenSecret, { expiresIn: '10m' });
+    // Create a pin
+    const newPin = randomstring.generate(12);
+
+    // Hash the pin
+    const pinHashed = await bcrypt.hash(newPin, 12);
 
     // Update pin in the database
-    const updatePin = await updateUserPin(email, newPin);
+    const updatePin = await updateUserPin(email, pinHashed);
     if (!updatePin) throw { code: 500, message: 'Could not generate a pin' };
 
     // Send email with the pin
     const subject = 'Your PIN Verification is Here';
-    const body = `PIN: ${newPin}`;
+    const body = `Login PIN: ${newPin}`;
 
     const sendEmailResults = await sendEmailText(email, subject, body);
 
@@ -156,15 +161,12 @@ const login = async function login(req) {
     // Check if there is no email or pin
     if (!email || !pin || !ip) throw { code: 400, message: 'Please provide email and pin' };
 
-    // Validate PIN and JWT
-    const pinResults = await jwt.verify(pin, pinTokenSecret);
-
     // Get user information from database and check if it matches
     const userDb = await getUser(email);
 
-    if (userDb && userDb.email == email && userDb.pin == pin && pin !== 'null' && userDb.pin !== 'null' && pinResults.email == email) {
+    if (userDb && userDb.email == email && pin !== 'null' && userDb.pin !== 'null' && await bcrypt.compare(pin, userDb.pin)) {
       // Generate access token and refresh token
-      const user = { email: email };
+      const user = { email: email, username: userDb.username };
 
       const accessToken = await jwt.sign(user, accessTokenSecret, { expiresIn: '30m' });
       const refreshToken = await jwt.sign(user, refreshTokenSecret);
@@ -252,12 +254,12 @@ const renewToken = async function renewToken(req) {
     const refreshTokenVerify = await jwt.verify(refreshToken, refreshTokenSecret);
 
     // Check the email on both of the tokens
-    if (tokenVerify.email === refreshTokenVerify.email) {
+    if (tokenVerify.email === refreshTokenVerify.email && tokenVerify.username === refreshTokenVerify.username) {
       // Check if this refresh token still active in the database
-      const queryResults = await db.query('select email, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, tokenVerify.email]);
-      if (queryResults && queryResults.rows[0] && (queryResults.rows[0].email === tokenVerify.email)) {
+      const queryResults = await db.query('select email, username, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, tokenVerify.email]);
+      if (queryResults && queryResults.rows[0] && queryResults.rows[0].email === tokenVerify.email && queryResults.rows[0].username === tokenVerify.username) {
         // Generate a new access token
-        const user = { email: queryResults.rows[0].email };
+        const user = { email: tokenVerify.email, username: tokenVerify.username };
         const newAccessToken = await jwt.sign(user, accessTokenSecret, { expiresIn: '30m' });
 
         // Generate a new refresh token
@@ -370,11 +372,42 @@ const verifyToken = async function verifyToken(req) {
   }
 };
 
+/**
+ * @function checkUsernameAvailablity
+ * @summary Check if username already in the database
+ * @param {*} req http request contains access token and refresh token
+ * @returns {object} checkUsernameResults
+ * @throws {object} errorCodeAndMsg
+ */
+const checkUsernameAvailablity = async function checkUsernameAvailablity(req) {
+  try {
+    const { username } = req.body;
+
+    if (!username || username === 'null') throw { code: 400, message: 'Please provide a valid username' };
+
+    const queryResults = await db.query('select username from users where username=$1', [username]);
+    if (queryResults && queryResults.rows[0] && queryResults.rows[0].username === username) {
+      return ({ 'username': queryResults.rows[0].username });
+    } else if (queryResults && queryResults.rows.length <= 0) {
+      return ({ 'username': false });
+    }
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const errorMsg = 'Could not generate a new token from existing refresh token';
+    logger.error({ errorMsg, error });
+    throw { code: 500, message: errorMsg };
+  }
+};
+
 module.exports = {
   generateUserPin,
   login,
   logout,
   renewToken,
   renewTokenByCookie,
-  verifyToken
+  verifyToken,
+  checkUsernameAvailablity
 };

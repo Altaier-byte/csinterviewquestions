@@ -87,4 +87,11 @@ router.post('/renewTokenByCookie', async (req, res) => {
   callSrcFile('renewTokenByCookie', [req], req, res);
 });
 
+/**
+ * @summary Check if username is in database
+ */
+router.post('/checkUsernameAvailablity', async (req, res) => {
+  callSrcFile('checkUsernameAvailablity', [req], req, res);
+});
+
 module.exports = router;
