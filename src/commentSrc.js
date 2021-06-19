@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const filter = new Filter();
 const { logger } = require('./logger');
 const db = require('../db/db');
-const { isHttpErrorCode, sendEmailText } = require('./tools');
+const { isHttpErrorCode } = require('./tools');
 
 /**
  * @function newComment
@@ -26,27 +26,14 @@ const newComment = async function newComment(postId, body, solution, user) {
     // Get date
     const createDate = moment().format('MM/DD/YYYY');
 
-    // Create a pin
-    const pin = randomstring.generate(12);
-
-    // Hash the pin
-    const pinHashed = await bcrypt.hash(pin, 12);
-
     // Create a new post in the databsae
-    const commentQuery = await db.query('insert into comments(post_id, body, solution, status, pin, create_date) VALUES($1, $2, $3, $4, $5, $6) returning id', [postId, body, solution, 'published', pinHashed, createDate]);
+    const commentQuery = await db.query('insert into comments(post_id, body, solution, status, username, create_date) VALUES($1, $2, $3, $4, $5, $6) returning id', [postId, body, solution, 'published', user.username, createDate]);
     logger.debug({ label: 'create new comment query response', results: commentQuery.rows });
 
-    // Send an email with the pin
-    const subject = 'Comment Published - You\'re Admin PIN is Here!';
-    const message = `You're comment is published, please use this PIN to edit or delete your comment in the future!
-    Comment Id: ${commentQuery.rows[0].id}
-    Comment PIN: ${pin}`;
-    const sendEmail = await sendEmailText(user.email, subject, message);
-
-    if (sendEmail) {
-      return { message: 'Comment have been published successfully, and email has been sent with the your admin pin.', id: commentQuery.rows[0].id };
+    if (commentQuery && commentQuery.rows.length > 0) {
+      return { message: 'Comment have been published successfully', id: commentQuery.rows[0].id };
     } else {
-      throw { code: 500, message: 'Could not send comment pin email' };
+      throw { code: 500, message: 'Could not publish comment' };
     }
   } catch (error) {
     if (error.code && isHttpErrorCode(error.code)) {
@@ -106,7 +93,7 @@ const getCommentExternal = async function getCommentExternal(commentId, user) {
   try {
     if (!commentId) throw { code: 400, message: 'Please provide a comment id' };
 
-    const queryResults = await db.query('select id, post_id, body, solution, create_date from comments where id=$1', [commentId]);
+    const queryResults = await db.query('select id, post_id, body, solution, create_date, username from comments where id=$1', [commentId]);
     logger.debug({ label: 'get a comment query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) return queryResults.rows[0];
@@ -126,23 +113,20 @@ const getCommentExternal = async function getCommentExternal(commentId, user) {
  * @function deleteComment
  * @summary Delete a comment
  * @param {number} commentId Comment's id
- * @param {string} commentPin Comment's pin
  * @param {object} user User information
  * @returns {object} commentDeleteResults
  * @throws {object} errorCodeAndMsg
  */
-const deleteComment = async function deleteComment(commentId, commentPin, user) {
+const deleteComment = async function deleteComment(commentId, user) {
   try {
-    if (!commentId || !commentPin) throw { code: 400, message: 'Please provide a comment id and it\'s admin pin' };
+    if (!commentId) throw { code: 400, message: 'Please provide a comment id' };
 
     // Get comment
     const commentDb = await getComment(commentId);
     if (!commentDb) throw { code: 404, message: 'Could not find requested comment' };
 
-    // Compare comment pin to the pin
-    const commentHash = commentDb.pin;
-    const validatePin = bcrypt.compare(commentPin, commentHash);
-    if (!validatePin) throw { code: 401, message: 'Please check pin and comment' };
+    // Compare comment username to username
+    if (commentDb.username !== user.username) throw { code: 403, message: 'User does not have permissions to delete this comment' };
 
     // Delete comment
     const setCommentDb = await setCommentStatus(commentId, 'deleted');
@@ -164,25 +148,22 @@ const deleteComment = async function deleteComment(commentId, commentPin, user) 
  * @function modifyComment
  * @summary Modify a comment
  * @param {number} commentId Comment's id
- * @param {string} pin Comment's pin
  * @param {boolean} solution Indicate if it's a solution or not
  * @param {string} body Body
  * @param {object} user User information
  * @returns {object} newCommentResults
  * @throws {object} errorCodeAndMsg
  */
-const modifyComment = async function modifyComment(commentId, commentPin, body, solution, user) {
+const modifyComment = async function modifyComment(commentId, body, solution, user) {
   try {
-    if (!commentId || !commentPin) throw { code: 400, message: 'Please provide a comment id and it\'s admin pin' };
+    if (!commentId) throw { code: 400, message: 'Please provide a comment id' };
 
     // Get comment
     const commentDb = await getComment(commentId);
     if (!commentDb) throw { code: 404, message: 'Could not find requested comment' };
 
-    // Compare comment pin to the pin
-    const commentHash = commentDb.pin;
-    const validatePin = bcrypt.compare(commentPin, commentHash);
-    if (!validatePin) throw { code: 401, message: 'Please check pin and comment' };
+    // Compare comment username to username
+    if (commentDb.username !== user.username) throw { code: 403, message: 'User does not have permissions to modify this comment' };
 
     // Clean language
     body = body ? filter.clean(body) : body;
@@ -240,7 +221,7 @@ const getAllPostCommentsExternal = async function getAllPostCommentsExternal(pos
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
+    const queryResults = await db.query(`select id, post_id, create_date, body, solution, username from comments where post_id=$1 order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
     logger.debug({ label: 'get all post comments query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -276,7 +257,7 @@ const getAllPostSolutionsExternal = async function getAllPostSolutionsExternal(p
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, post_id, create_date, body, solution from comments where post_id=$1 and solution=true order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
+    const queryResults = await db.query(`select id, post_id, create_date, body, solution, username from comments where post_id=$1 and solution=true order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
     logger.debug({ label: 'get all post solutions query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {

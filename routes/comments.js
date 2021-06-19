@@ -71,10 +71,9 @@ router.get('/comments/:commentId', async (req, res) => {
  */
 router.delete('/comments', async (req, res) => {
   const {
-    commentId,
-    commentPin
+    commentId
   } = req.body;
-  callSrcFile('deleteComment', [commentId, commentPin], req, res);
+  callSrcFile('deleteComment', [commentId], req, res);
 });
 
 /**
@@ -83,11 +82,10 @@ router.delete('/comments', async (req, res) => {
 router.put('/comments', async (req, res) => {
   const {
     commentId,
-    commentPin,
     body,
     solution
   } = req.body;
-  callSrcFile('modifyPost', [commentId, commentPin, body, solution], req, res);
+  callSrcFile('modifyPost', [commentId, body, solution], req, res);
 });
 
 /**
