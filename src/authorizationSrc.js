@@ -402,6 +402,34 @@ const checkUsernameAvailablity = async function checkUsernameAvailablity(req) {
   }
 };
 
+/**
+ * @function getTokenUser
+ * @summary Get user information from token
+ * @param {object} user User information
+ * @returns {object} User information
+ * @throws {object} errorCodeAndMsg
+ */
+const getTokenUser = async function getTokenUser(user) {
+  try {
+    if (user) {
+      return { email: user.email, username: user.username };
+    } else {
+      throw {
+        code: 404,
+        message: 'Could not find user information'
+      };
+    }
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not get user information';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
 module.exports = {
   generateUserPin,
   login,
@@ -409,5 +437,6 @@ module.exports = {
   renewToken,
   renewTokenByCookie,
   verifyToken,
-  checkUsernameAvailablity
+  checkUsernameAvailablity,
+  getTokenUser
 };
