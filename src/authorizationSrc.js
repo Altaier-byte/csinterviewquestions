@@ -196,7 +196,7 @@ const login = async function login(req) {
 
 /**
  * @function logout
- * @summary Logout of the system to the system
+ * @summary Logout of the system by an access toke and a refresh token
  * @param {*} req http request contains access token and refresh token
  * @returns {object} logoutMsg
  * @throws {object} errorCodeAndMsg
@@ -214,6 +214,42 @@ const logout = async function logout(req) {
     const refreshTokenVerify = await jwt.verify(refreshToken, refreshTokenSecret);
 
     if (tokenVerify.id != refreshTokenVerify.id) throw { code: 401, message: 'Please provide valid token and refresh token' };
+
+    // Delete refresh token from database
+    const dbResults = await db.query('update users set refresh_token=$1 where refresh_token=$2', ['null', refreshToken]);
+
+    if (dbResults) {
+      return ({ 'results': 'Logged out successful' });
+    } else {
+      throw { code: 500, message: 'Could not delete token' };
+    }
+  } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const errorMsg = 'Could not logout';
+    logger.error({ errorMsg, error });
+    throw { code: 500, message: errorMsg };
+  }
+};
+
+/**
+ * @function logoutByCookie
+ * @summary Logout of the system by cookie
+ * @param {*} req http request contains refresh token
+ * @returns {object} logoutMsg
+ * @throws {object} errorCodeAndMsg
+ */
+const logoutByCookie = async function logoutByCookie(req) {
+  try {
+    // Extract refresh token from cookie
+    const refreshToken = req.cookies['refresh_token'];
+
+    if (!refreshToken) throw { code: 400, message: 'Please provide a refresh token' };
+
+    // Verify refresh token
+    await jwt.verify(refreshToken, refreshTokenSecret);
 
     // Delete refresh token from database
     const dbResults = await db.query('update users set refresh_token=$1 where refresh_token=$2', ['null', refreshToken]);
@@ -434,6 +470,7 @@ module.exports = {
   generateUserPin,
   login,
   logout,
+  logoutByCookie,
   renewToken,
   renewTokenByCookie,
   verifyToken,

@@ -67,10 +67,17 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * @summary Logout and delete the stored refresh token
+ * @summary Logout and delete the stored refresh token by an access token and a refresh tokens
  */
 router.delete('/logout', async (req, res) => {
   callSrcFile('logout', [req], req, res, false);
+});
+
+/**
+ * @summary Get a new access token using existing refresh token cookie by refresh token
+ */
+router.post('/logoutByCookie', async (req, res) => {
+  callSrcFile('logoutByCookie', [req], req, res);
 });
 
 /**
