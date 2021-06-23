@@ -166,10 +166,10 @@ const login = async function login(req) {
 
     if (userDb && userDb.email == email && pin !== 'null' && userDb.pin !== 'null' && await bcrypt.compare(pin, userDb.pin)) {
       // Generate access token and refresh token
-      const user = { email: email, username: userDb.username };
+      const userSign = { email: email, username: userDb.username };
 
-      const accessToken = await jwt.sign(user, accessTokenSecret, { expiresIn: '30m' });
-      const refreshToken = await jwt.sign(user, refreshTokenSecret);
+      const accessToken = await jwt.sign(userSign, accessTokenSecret, { expiresIn: '30m' });
+      const refreshToken = await jwt.sign(userSign, refreshTokenSecret);
 
       // Update the database with the new refresh token
       await db.query('update users set refresh_token=$1 where email=$2', [refreshToken, email]);
@@ -295,13 +295,13 @@ const renewToken = async function renewToken(req) {
       const queryResults = await db.query('select email, username, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, tokenVerify.email]);
       if (queryResults && queryResults.rows[0] && queryResults.rows[0].email === tokenVerify.email && queryResults.rows[0].username === tokenVerify.username) {
         // Generate a new access token
-        const user = { email: tokenVerify.email, username: tokenVerify.username };
-        const newAccessToken = await jwt.sign(user, accessTokenSecret, { expiresIn: '30m' });
+        const userSign = { email: tokenVerify.email, username: tokenVerify.username };
+        const newAccessToken = await jwt.sign(userSign, accessTokenSecret, { expiresIn: '30m' });
 
         // Generate a new refresh token
-        const newRefreshToken = await jwt.sign(user, refreshTokenSecret);
+        const newRefreshToken = await jwt.sign(userSign, refreshTokenSecret);
         // Update the database with the new refresh token
-        await db.query('update users set refresh_token=$1 where email=$2', [newRefreshToken, user.email]);
+        await db.query('update users set refresh_token=$1 where email=$2', [newRefreshToken, userSign.email]);
 
         // Return new access token and same refresh token
         return ({ 'accessToken': newAccessToken, 'refreshToken': newRefreshToken });
@@ -345,16 +345,16 @@ const renewTokenByCookie = async function renewTokenByCookie(req) {
     const queryResults = await db.query('select email, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, refreshTokenVerify.email]);
 
     if (queryResults && queryResults.rows[0] && queryResults.rows[0]['refresh_token'] === refreshToken) {
-      const user = { email: queryResults.rows[0].email };
+      const userSign = { email: queryResults.rows[0].email };
 
       // Generate a new access token
-      const newAccessToken = await jwt.sign(user, accessTokenSecret, { expiresIn: '30m' });
+      const newAccessToken = await jwt.sign(userSign, accessTokenSecret, { expiresIn: '30m' });
 
       // Generate a new refresh token
-      const newRefreshToken = await jwt.sign(user, refreshTokenSecret);
+      const newRefreshToken = await jwt.sign(userSign, refreshTokenSecret);
 
       // Update the database with the new refresh token
-      await db.query('update users set refresh_token=$1 where email=$2', [newRefreshToken, user.email]);
+      await db.query('update users set refresh_token=$1 where email=$2', [newRefreshToken, userSign.email]);
 
       // Return new access token and same refresh token
       return ({ 'accessToken': newAccessToken, 'refreshToken': newRefreshToken });
@@ -364,7 +364,6 @@ const renewTokenByCookie = async function renewTokenByCookie(req) {
       throw { code: 401, message: dbMsg };
     }
   } catch (error) {
-    console.log(error);
     if (error.code && isHttpErrorCode(error.code)) {
       logger.error(error);
       throw error;
