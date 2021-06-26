@@ -342,10 +342,10 @@ const renewTokenByCookie = async function renewTokenByCookie(req) {
     const refreshTokenVerify = await jwt.verify(refreshToken, refreshTokenSecret);
 
     // Check if this refresh token still active in the database
-    const queryResults = await db.query('select email, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, refreshTokenVerify.email]);
+    const queryResults = await db.query('select email, username, refresh_token from users where refresh_token=$1 and email=$2', [refreshToken, refreshTokenVerify.email]);
 
     if (queryResults && queryResults.rows[0] && queryResults.rows[0]['refresh_token'] === refreshToken) {
-      const userSign = { email: queryResults.rows[0].email };
+      const userSign = { email: queryResults.rows[0].email, username: queryResults.rows[0].username };
 
       // Generate a new access token
       const newAccessToken = await jwt.sign(userSign, accessTokenSecret, { expiresIn: '30m' });
@@ -395,7 +395,7 @@ const verifyToken = async function verifyToken(req) {
       throw { code: 401, messages: 'Access denied' };
     }
 
-    return (results);
+    return ({ email: results.email, username: results.username });
   } catch (error) {
     if (error.code && isHttpErrorCode(error.code)) {
       logger.error(error);

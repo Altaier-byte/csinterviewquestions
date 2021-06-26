@@ -104,8 +104,8 @@ router.post('/checkUsernameAvailablity', async (req, res) => {
 /**
  * @summary Get user from token
  */
-router.post('/getTokenUser', async (req, res) => {
-  callSrcFile('getTokenUser', [req], req, res);
+router.get('/getTokenUser', async (req, res) => {
+  callSrcFile('getTokenUser', [], req, res, false);
 });
 
 module.exports = router;
