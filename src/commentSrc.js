@@ -119,7 +119,7 @@ const getCommentExternal = async function getCommentExternal(commentId, user) {
  */
 const deleteComment = async function deleteComment(commentId, user) {
   try {
-    if (!commentId) throw { code: 400, message: 'Please provide a comment id' };
+    if (!commentId && commentId != 0) throw { code: 400, message: 'Please provide a comment id' };
 
     // Get comment
     const commentDb = await getComment(commentId);
@@ -221,7 +221,7 @@ const getAllPostCommentsExternal = async function getAllPostCommentsExternal(pos
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, post_id, create_date, body, solution, username from comments where post_id=$1 order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
+    const queryResults = await db.query(`select id, post_id, create_date, body, solution, username from comments where post_id=$1 and status='published' order by create_date ${sortOrder} limit ${limit} offset ${offset}`, [postId]);
     logger.debug({ label: 'get all post comments query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {

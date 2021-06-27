@@ -69,10 +69,10 @@ router.get('/comments/:commentId', async (req, res) => {
 /**
  * @summary Delete a comment
  */
-router.delete('/comments', async (req, res) => {
+router.delete('/comments/:commentId', async (req, res) => {
   const {
     commentId
-  } = req.body;
+  } = req.params;
   callSrcFile('deleteComment', [commentId], req, res);
 });
 
