@@ -131,7 +131,7 @@ const getPostExternal = async function getPostExternal(postId, user) {
   try {
     if (!postId) throw { code: 400, message: 'Please provide a post id' };
 
-    const queryResults = await db.query('select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where id=$1', [postId]);
+    const queryResults = await db.query('select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where id=$1 and status=\'published\'', [postId]);
     logger.debug({ label: 'get a post query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -290,7 +290,7 @@ const getAllPostsExternal = async function getAllPostsExternal(sortKey, sortOrde
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts order by ${sortKey} ${sortOrder} limit $1 offset $2`, [limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where status='published' order by ${sortKey} ${sortOrder} limit $1 offset $2`, [limit, offset]);
     logger.debug({ label: 'get all posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -329,7 +329,7 @@ const getAllCompanyPostsExternal = async function getAllCompanyPostsExternal(sor
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where company=$1 order by ${sortKey} ${sortOrder} limit $2 offset $3`, [company, limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where company=$1 and status='published' order by ${sortKey} ${sortOrder} limit $2 offset $3`, [company, limit, offset]);
     logger.debug({ label: 'get all company posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -368,7 +368,7 @@ const getAllPositionPostsExternal = async function getAllPositionPostsExternal(s
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 order by ${sortKey} ${sortOrder} limit $2 offset $3`, [position, limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 and status='published' order by ${sortKey} ${sortOrder} limit $2 offset $3`, [position, limit, offset]);
     logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {
@@ -408,7 +408,7 @@ const getAllPositionCompanyPostsExternal = async function getAllPositionCompanyP
 
     if (limit > 50) throw { code: 400, message: 'Maximum limit is 50' };
 
-    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 and company=$2 order by ${sortKey} ${sortOrder} limit $3 offset $4`, [position, company, limit, offset]);
+    const queryResults = await db.query(`select id, title, create_date, interview_date, company, body, position, votes_up, votes_down, views from posts where position=$1 and company=$2 and status='published' order by ${sortKey} ${sortOrder} limit $3 offset $4`, [position, company, limit, offset]);
     logger.debug({ label: 'get all position posts query response', results: queryResults.rows });
 
     if (queryResults && queryResults.rows[0]) {

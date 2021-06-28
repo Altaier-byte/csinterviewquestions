@@ -71,12 +71,10 @@ router.get('/posts/:postId', async (req, res) => {
 /**
  * @summary Delete a post
  */
-router.delete('/posts', async (req, res) => {
-  const {
-    postId,
-    postPin
-  } = req.body;
-  callSrcFile('deletePost', [postId, postPin], req, res);
+router.post('/deletePost/:postId', async (req, res) => {
+  const { postPin } = req.body;
+  const { postId } = req.params;
+  callSrcFile('deletePost', [postId, postPin], req, res, true);
 });
 
 /**
