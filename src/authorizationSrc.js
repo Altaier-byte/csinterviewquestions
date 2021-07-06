@@ -408,6 +408,46 @@ const verifyToken = async function verifyToken(req) {
 };
 
 /**
+ * @function checkToken
+ * @summary Verify token and return user information
+ * @param {object} req http request contains access token
+ * @param {object} res http response object
+ * @param {function} next http next function
+ * @returns {object} newRequest includes original request and user information from token
+ * @throws {string} errorMsg
+ */
+const checkToken = async function checkToken(req, res, next) {
+  try {
+    const { token } = req.headers;
+
+    if (!token) {
+      throw { code: 400, messages: 'Token required' };
+    }
+
+    const results = await jwt.verify(token, accessTokenSecret);
+
+    if (!results) {
+      throw { code: 401, messages: 'Access denied' };
+    }
+
+    const user = { email: results.email, username: results.username };
+
+    req['user'] = user;
+
+    next();
+  } catch (error) {
+    const errorMsg = 'Not authorized';
+    logger.error({ errorMsg, error });
+    res.status(401).json({
+      error: {
+        code: 401,
+        message: errorMsg
+      }
+    });
+  }
+};
+
+/**
  * @function checkUsernameAvailablity
  * @summary Check if username already in the database
  * @param {*} req http request contains access token and refresh token
@@ -473,6 +513,7 @@ module.exports = {
   renewToken,
   renewTokenByCookie,
   verifyToken,
+  checkToken,
   checkUsernameAvailablity,
   getTokenUser
 };
