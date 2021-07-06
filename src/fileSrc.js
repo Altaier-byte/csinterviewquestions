@@ -109,6 +109,7 @@ const addDocumentFileUrl = async function addDocumentFileUrl(documentId, fileUrl
  * @summary Delete post/comment's file url by its id
  * @param {number} fileId File's id
  * @param {string} documentType Document type post vs comment
+ * @param {object} user User's information
  * @returns {object} deleteFileResults
  * @throws {boolean} false
  */
@@ -147,6 +148,7 @@ const deleteDocumentFileUrlById = async function deleteDocumentFileUrlById(fileI
  * @summary Delete post/comment's file url by its url
  * @param {string} fileUrl File's url
  * @param {string} documentType Document type post vs comment
+ * @param {object} user User's information
  * @returns {object} deleteFileResults
  * @throws {boolean} false
  */
@@ -185,6 +187,7 @@ const deleteDocumentFileUrlByUrl = async function deleteDocumentFileUrlByUrl(fil
  * @summary Delete post/comment's file url by its post/comment id
  * @param {number} documentId Post/comment's id
  * @param {string} documentType Document type post vs comment
+ * @param {object} user User's information
  * @returns {object} deleteFileResults
  * @throws {boolean} false
  */
@@ -226,7 +229,7 @@ const deleteDocumentFileUrlByDocumentId = async function deleteDocumentFileUrlBy
  * @returns {object} getFileResults
  * @throws {boolean} false
  */
-const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocumentId(documentId, documentType, user) {
+const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocumentId(documentId, documentType) {
   try {
     // Check if there is no document id or document type
     if (!documentId || !documentType) throw { code: 400, message: 'Please provide document id, and document type' };
@@ -246,13 +249,9 @@ const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocume
 
     return queryResults.rows;
   } catch (error) {
-    if (error.code && isHttpErrorCode(error.code)) {
-      logger.error(error);
-      throw error;
-    }
     const userMsg = 'Could not get document file url by post/comment id';
     logger.error({ userMsg, error });
-    throw { code: 500, message: userMsg };
+    return false;
   }
 };
 
