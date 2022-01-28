@@ -5,22 +5,28 @@ const bcrypt = require('bcrypt');
 const filter = new Filter();
 const { logger } = require('./logger');
 const db = require('../db/db');
-const { isHttpErrorCode, sendEmailText } = require('./tools');
+const fileSrc = require('./fileSrc');
+const { isHttpErrorCode, sendEmailText, parseFormDataWithFile } = require('./tools');
 
 /**
  * @function newPost
  * @summary Create a new post
- * @param {string} title Title
- * @param {string} interviewDate Interview date
- * @param {string} company Company
- * @param {string} position Position or title
- * @param {string} body Body or description
+ * @param {object} req Http request
  * @param {object} user User information
  * @returns {object} newPostResults
  * @throws {object} errorCodeAndMsg
  */
-const newPost = async function newPost(title, interviewDate, company, position, body, user) {
+const newPost = async function newPost(req, user) {
   try {
+    req = await parseFormDataWithFile(req);
+    const { interviewDate } = req.body;
+    let {
+      title,
+      company,
+      position,
+      body,
+    } = req.body;
+
     // Check if there is no email or password
     if (!title || !interviewDate || !company || !position) {
       throw { code: 400, message: 'Please provide title, interview date, company, position' };
@@ -30,6 +36,9 @@ const newPost = async function newPost(title, interviewDate, company, position, 
     company = filter.clean(company);
     position = filter.clean(position);
     body = body ? filter.clean(body) : body;
+
+    // Upload post's attached file
+    const uploadFileResults = await fileSrc.uploadFile(req, 'posts');
 
     // Get date
     const createDate = moment().format('MM/DD/YYYY');
@@ -43,6 +52,11 @@ const newPost = async function newPost(title, interviewDate, company, position, 
     // Create a new post in the databsae
     const postQuery = await db.query('insert into posts(title, interview_date, company, position, body, status, pin, create_date) VALUES($1, $2, $3, $4, $5, $6, $7, $8) returning id', [title, interviewDate, company, position, body, 'published', pinHashed, createDate]);
     logger.debug({ label: 'create new post query response', results: postQuery.rows });
+
+    // Add post and file in the database
+    if (uploadFileResults.fileUrl) {
+      await fileSrc.addDocumentFileUrl(postQuery.rows[0].id, uploadFileResults.fileUrl, 'post');
+    }
 
     // Send an email with the pin
     const subject = 'Post Published - You\'re Admin PIN is Here!';

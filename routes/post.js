@@ -50,14 +50,7 @@ const callSrcFile = async function callSrc(functionName, parameters, req, res, s
  * @summary Create a post
  */
 router.post('/posts', async (req, res) => {
-  const {
-    title,
-    interviewDate,
-    company,
-    position,
-    body
-  } = req.body;
-  callSrcFile('newPost', [title, interviewDate, company, position, body], req, res);
+  callSrcFile('newPost', [req], req, res);
 });
 
 /**

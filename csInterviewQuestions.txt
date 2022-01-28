@@ -1,0 +1,17 @@
+title Authentication Process
+
+user->frontend: Login (email)
+frontend-->user: Ask for pin
+frontend->backend: Login (email)
+backend-->user: Send an email with a pin
+user->frontend: Login (pin)
+frontend->backend: login (email, pin)
+backend->backend: Verify pin
+backend-->frontend: jwt and refresh token
+frontend->frontend: store jwt in local storage
+frontend->frontend: store refresh token as cookie
+frontend-->user: New post page
+user->frontend: Create a new post
+frontend->backend: Create a new post + jwt
+backend->backend: Create a new post
+backend-->frontend: Created

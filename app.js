@@ -25,7 +25,7 @@ const serverUrl = 'localhost';
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded({
+app.use(express.urlencoded({
   extended: true
 }));
 app.use(expressSanitizer());
