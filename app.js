@@ -15,6 +15,7 @@ const { logger } = require('./src/logger');
 const authorizationRoutes = require('./routes/authorization');
 const postRoutes = require('./routes/post');
 const commentRoutes = require('./routes/comments');
+const systemRoutes = require('./routes/system');
 
 // Application Setup
 const app = express();
@@ -50,6 +51,9 @@ app.use(postRoutes);
 
 // Comments routes
 app.use(commentRoutes);
+
+// System and stats routes
+app.use(systemRoutes);
 
 // Not Found Route
 app.get('*', function (req, res) {
