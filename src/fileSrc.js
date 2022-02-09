@@ -1,17 +1,51 @@
 const path = require('path');
 const { format } = require('util');
 const { Storage } = require('@google-cloud/storage');
+const multer = require('multer');
 const { logger } = require('./logger');
 const { isHttpErrorCode } = require('./tools');
 const db = require('../db/db');
 
+// Configure upload to GCS
 const gcsProjectId = process.env.GCS_PROJECT_ID;
 const gcsFilePath = process.env.GCS_FILE_PATH;
 const gcsBucket = process.env.GCS_BUCKET;
 
 const storage = new Storage({ projectId: gcsProjectId, keyFilename: path.join(__dirname, gcsFilePath) });
-
 const bucket = storage.bucket(gcsBucket);
+
+// Configure upload to local server
+const storageLocal = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './public/files/userUpload');
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const uploadLocal = multer({
+  storage: storageLocal,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // no larger than 5mb
+  },
+  fileFilter: function (req, file, callback) {
+    try {
+      const ext = path.extname(file.originalname);
+      if (ext !== '.png') throw { code: 400, message: 'Unsupported file type, only zip files are allowed' };
+      logger.debug({ label: 'Filtered file - format okay' });
+      callback(null, true);
+    } catch (error) {
+      if (error.code && isHttpErrorCode(error.code)) {
+        logger.error(error);
+        callback(error);
+      }
+      const userMsg = 'Could not filter file';
+      logger.error({ userMsg, error });
+      callback({ code: 500, message: userMsg });
+    }
+  }
+}).single('file');
 
 /**
  * @function uploadFile
@@ -49,6 +83,38 @@ const uploadFile = function uploadFile(req, folderName) {
     });
 
     blobStream.end(req.file.buffer);
+  });
+};
+
+/**
+ * @function uploadFile
+ * @summary Upload a file to Google Cloud Storage
+ * @param {object} req Http request
+ * @param {string} folderName Folder name posts or comments
+ * @returns {object} uploadFileResults
+ * @throws {object} errorCodeAndMsg
+ */
+const uploadFileLocally = function uploadFileLocally(req, folderName) {
+  if (folderName !== 'posts' && folderName !== 'comments') throw { code: 500, message: 'Folder must be posts or comments' };
+
+  return new Promise((resolve, reject) => {
+    // Upload file
+    uploadLocal(req, null, function (err) {
+      if (!req.file) {
+        logger.debug({ label: 'Upload file skipped', results: 'Empty file request' });
+        resolve({ message: 'Empty file request' }, req);
+      }
+
+      if (err) {
+        logger.error({ label: 'Could not upload file', results: err });
+        reject(new Error({ code: 500, message: 'Could not upload file' }));
+      } else {
+        const fileUrl = req.file.path.replace('public/', '/');
+
+        logger.debug({ message: 'Uploaded file successfully', results: fileUrl });
+        resolve({ message: 'Uploaded file successfully', fileUrl, req });
+      }
+    });
   });
 };
 
@@ -234,6 +300,7 @@ const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocume
 
 module.exports = {
   uploadFile,
+  uploadFileLocally,
   addDocumentFileUrl,
   deleteDocumentFileUrlById,
   deleteDocumentFileUrlByUrl,

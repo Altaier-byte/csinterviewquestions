@@ -18,7 +18,12 @@ const { isHttpErrorCode, sendEmailText, parseFormDataWithFile } = require('./too
  */
 const newPost = async function newPost(req, user) {
   try {
-    req = await parseFormDataWithFile(req);
+    // req = await parseFormDataWithFile(req); // use with GCS
+
+    // Upload post's attached file locally
+    const uploadFileResults = await fileSrc.uploadFileLocally(req, 'posts');
+    req = uploadFileResults.req;
+
     const { interviewDate } = req.body;
     let {
       title,
@@ -38,7 +43,7 @@ const newPost = async function newPost(req, user) {
     body = body ? filter.clean(body) : body;
 
     // Upload post's attached file
-    const uploadFileResults = await fileSrc.uploadFile(req, 'posts');
+    // const uploadFileResults = await fileSrc.uploadFileLocally(req, 'posts'); // Use with GCS
 
     // Get date
     const createDate = moment().format('MM/DD/YYYY');
