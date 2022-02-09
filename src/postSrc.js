@@ -2,6 +2,8 @@ const moment = require('moment');
 const Filter = require('bad-words');
 const randomstring = require('randomstring');
 const bcrypt = require('bcrypt');
+const path = require('path');
+const fs = require('fs');
 const filter = new Filter();
 const { logger } = require('./logger');
 const db = require('../db/db');
@@ -17,12 +19,14 @@ const { isHttpErrorCode, sendEmailText, parseFormDataWithFile } = require('./too
  * @throws {object} errorCodeAndMsg
  */
 const newPost = async function newPost(req, user) {
+  let fileUrl = '';
   try {
     // req = await parseFormDataWithFile(req); // use with GCS
 
     // Upload post's attached file locally
     const uploadFileResults = await fileSrc.uploadFileLocally(req, 'posts');
     req = uploadFileResults.req;
+    fileUrl = uploadFileResults.fileUrl ? uploadFileResults.fileUrl : '';
 
     const { interviewDate } = req.body;
     let {
@@ -76,6 +80,8 @@ const newPost = async function newPost(req, user) {
       throw { code: 500, message: 'Could not send post pin email' };
     }
   } catch (error) {
+    if (fileUrl) fs.unlinkSync(`${path.resolve(__dirname, '../public')}${fileUrl}`);
+
     if (error.code && isHttpErrorCode(error.code)) {
       logger.error(error);
       throw error;

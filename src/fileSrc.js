@@ -102,7 +102,7 @@ const uploadFileLocally = function uploadFileLocally(req, folderName) {
     uploadLocal(req, null, function (err) {
       if (!req.file) {
         logger.debug({ label: 'Upload file skipped', results: 'Empty file request' });
-        resolve({ message: 'Empty file request' }, req);
+        resolve({ message: 'Empty file request', req });
       }
 
       if (err) {
