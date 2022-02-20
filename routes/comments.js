@@ -85,7 +85,7 @@ router.put('/comments', async (req, res) => {
     body,
     solution
   } = req.body;
-  callSrcFile('modifyPost', [commentId, body, solution], req, res);
+  callSrcFile('modifyComment', [commentId, body, solution], req, res);
 });
 
 /**

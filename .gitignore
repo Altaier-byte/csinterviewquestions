@@ -104,3 +104,6 @@ dist
 .tern-port
 
 ignore/*
+
+public/files/userUpload/
+public/files/userUpload/**

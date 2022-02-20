@@ -170,21 +170,26 @@ const modifyComment = async function modifyComment(commentId, body, solution, us
 
     // Update comment
     let count = 1;
-    let updateString = 'update comments';
+    let updateString = 'update comments set(';
     const updateArray = [];
 
+    if (body) updateString = `${updateString} body `;
+    if (solution || solution === false) updateString = `${updateString}, solution `;
+
+    updateString = `${updateString})=(`;
+
     if (body) {
-      updateString = `${updateString} set body=$${count}`;
+      updateString = `${updateString} $${count}`;
       count += 1;
       updateArray.push(body);
     }
-    if (solution) {
-      updateString = `${updateString} set solution=$${count}`;
+    if (solution || solution === false) {
+      updateString = `${updateString}, $${count}`;
       count += 1;
       updateArray.push(solution);
     }
 
-    updateString = `${updateString} where id=$${count} returning id`;
+    updateString = `${updateString}) where id=$${count} returning id`;
     updateArray.push(commentId);
 
     const updateQuery = await db.query(updateString, updateArray);
