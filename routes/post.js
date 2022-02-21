@@ -83,7 +83,7 @@ router.put('/posts', async (req, res) => {
     position,
     body
   } = req.body;
-  callSrcFile('modifyPost', [postId, postPin, title, interviewDate, company, position, body], req, res);
+  callSrcFile('modifyPost', [postId, postPin, title, interviewDate, company, position, body], req, res, true);
 });
 
 /**

@@ -236,7 +236,7 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
 
     // Compare post pin to the pin
     const postHash = postDb.pin;
-    const validatePin = bcrypt.compare(postPin, postHash);
+    const validatePin = await bcrypt.compare(postPin, postHash);
     if (!validatePin) throw { code: 401, message: 'Please check pin and post' };
 
     // Clean language
@@ -247,36 +247,44 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
 
     // Update post
     let count = 1;
-    let updateString = 'update posts';
+    let updateString = 'update posts set(';
     const updateArray = [];
 
+    if (title) updateString = `${updateString} title`;
+    if (company) updateString = `${updateString}, company`;
+    if (position) updateString = `${updateString}, position`;
+    if (body) updateString = `${updateString}, body`;
+    if (interviewDate) updateString = `${updateString}, interview_date`;
+
+    updateString = `${updateString})=(`;
+
     if (title) {
-      updateString = `${updateString} set title=$${count}`;
+      updateString = `${updateString} $${count}`;
       count += 1;
       updateArray.push(title);
     }
     if (company) {
-      updateString = `${updateString} set company=$${count}`;
+      updateString = `${updateString}, $${count}`;
       count += 1;
       updateArray.push(company);
     }
     if (position) {
-      updateString = `${updateString} set position=$${count}`;
+      updateString = `${updateString}, $${count}`;
       count += 1;
       updateArray.push(position);
     }
     if (body) {
-      updateString = `${updateString} set body=$${count}`;
+      updateString = `${updateString}, $${count}`;
       count += 1;
       updateArray.push(body);
     }
     if (interviewDate) {
-      updateString = `${updateString} set interview_date=$${count}`;
+      updateString = `${updateString}, $${count}`;
       count += 1;
       updateArray.push(interviewDate);
     }
 
-    updateString = `${updateString} where id=$${count} returning id`;
+    updateString = `${updateString}) where id=$${count} returning id`;
     updateArray.push(postId);
 
     const updateQuery = await db.query(updateString, updateArray);
