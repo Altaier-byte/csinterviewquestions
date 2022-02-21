@@ -70,6 +70,7 @@ const newPost = async function newPost(req, user) {
     // Send an email with the pin
     const subject = 'Post Published - You\'re Admin PIN is Here!';
     const message = `You're post is published, please use this PIN to edit or delete your post in the future!
+    Post Id: ${postQuery.rows[0].id}
     Post Title: ${title}
     Post PIN: ${pin}`;
     const sendEmail = await sendEmailText(user.email, subject, message);
