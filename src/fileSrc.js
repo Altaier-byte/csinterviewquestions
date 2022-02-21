@@ -2,6 +2,7 @@ const path = require('path');
 const { format } = require('util');
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
+const postSrc = require('./postSrc');
 const { logger } = require('./logger');
 const { isHttpErrorCode } = require('./tools');
 const db = require('../db/db');
@@ -229,16 +230,24 @@ const deleteDocumentFileUrlByUrl = async function deleteDocumentFileUrlByUrl(fil
  * @function deleteDocumentFileUrlByDocumentId
  * @summary Delete post/comment's file url by its post/comment id
  * @param {number} documentId Post/comment's id
+ * @param {string} documentPin Document management pin
  * @param {string} documentType Document type post vs comment
  * @param {object} user User's information
  * @returns {object} deleteFileResults
  * @throws {boolean} false
  */
-const deleteDocumentFileUrlByDocumentId = async function deleteDocumentFileUrlByDocumentId(documentId, documentType, user) {
+const deleteDocumentFileUrlByDocumentId = async function deleteDocumentFileUrlByDocumentId(documentId, documentPin, documentType, user) {
   try {
     // Check if there is no document id or document type
     if (!documentId || !documentType) throw { code: 400, message: 'Please provide document id, and document type' };
 
+    // Verify document pin
+    if (documentType == 'post') {
+      const verifyPin = postSrc.verifyPostPin(documentId, documentPin);
+      if (!verifyPin) throw { code: 401, message: 'Please check pin and post' };
+    }
+
+    // Build table name and key name
     let tableName = null;
     let documentKeyName = null;
     if (documentType == 'post') {

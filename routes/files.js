@@ -54,4 +54,13 @@ router.get('/files/post/:postId', async (req, res) => {
   callSrcFile('getDocumentFileUrlByDocumentId', [postId, 'post'], req, res, true);
 });
 
+/**
+ * @summary delete files by a post id
+ */
+router.delete('/files/post/:postId', async (req, res) => {
+  const { postId } = req.params;
+  const { postPin } = req.body;
+  callSrcFile('deleteDocumentFileUrlByDocumentId', [postId, postPin, 'post'], req, res, true);
+});
+
 module.exports = router;
