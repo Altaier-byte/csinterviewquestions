@@ -69,3 +69,11 @@ app.listen(serverPort, serverUrl, function () {
   logger.info('Application started successfully...');
   logger.info(`Server can be accessed on http://${serverUrl}:${serverPort}`);
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log(reason);
+});
+
+process.on('uncaughtException', (reason) => {
+  console.log(reason);
+});
