@@ -2,7 +2,7 @@ const path = require('path');
 const { format } = require('util');
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
-const postSrc = require('./postSrc');
+const fs = require('fs');
 const { logger } = require('./logger');
 const { isHttpErrorCode } = require('./tools');
 const db = require('../db/db');
@@ -227,53 +227,6 @@ const deleteDocumentFileUrlByUrl = async function deleteDocumentFileUrlByUrl(fil
 };
 
 /**
- * @function deleteDocumentFileUrlByDocumentId
- * @summary Delete post/comment's file url by its post/comment id
- * @param {number} documentId Post/comment's id
- * @param {string} documentPin Document management pin
- * @param {string} documentType Document type post vs comment
- * @param {object} user User's information
- * @returns {object} deleteFileResults
- * @throws {boolean} false
- */
-const deleteDocumentFileUrlByDocumentId = async function deleteDocumentFileUrlByDocumentId(documentId, documentPin, documentType, user) {
-  try {
-    // Check if there is no document id or document type
-    if (!documentId || !documentType) throw { code: 400, message: 'Please provide document id, and document type' };
-
-    // Verify document pin
-    if (documentType == 'post') {
-      const verifyPin = postSrc.verifyPostPin(documentId, documentPin);
-      if (!verifyPin) throw { code: 401, message: 'Please check pin and post' };
-    }
-
-    // Build table name and key name
-    let tableName = null;
-    let documentKeyName = null;
-    if (documentType == 'post') {
-      tableName = 'post_files';
-      documentKeyName = 'post_id';
-    } else if (documentType == 'comment') {
-      tableName = 'comment_files';
-      documentKeyName = 'comment_id';
-    } else throw { code: 400, message: 'Unsupported file url document type' };
-
-    const queryResults = await db.query(`delete from ${tableName} where ${documentKeyName}=$1`, [documentId]);
-    logger.debug({ label: `delete a ${documentType}'s file url response`, results: queryResults.rows });
-
-    return { message: 'Deleted document file url by post/comment id successfully' };
-  } catch (error) {
-    if (error.code && isHttpErrorCode(error.code)) {
-      logger.error(error);
-      throw error;
-    }
-    const userMsg = 'Could not delete document file url by post/comment id';
-    logger.error({ userMsg, error });
-    throw { code: 500, message: userMsg };
-  }
-};
-
-/**
  * @function getDocumentFileUrlByDocumentId
  * @summary Get post/comment's file url by its post/comment id
  * @param {number} documentId Post/comment's id
@@ -307,12 +260,65 @@ const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocume
   }
 };
 
+/**
+ * @function deleteDocumentFilesByDocumentId
+ * @summary Delete post/comment's file url by its post/comment id
+ * @param {number} documentId Post/comment's id
+ * @param {string} documentPin Document management pin
+ * @param {string} documentType Document type post vs comment
+ * @param {object} user User's information
+ * @returns {object} deleteFileResults
+ * @throws {boolean} false
+ */
+const deleteDocumentFilesByDocumentId = async function deleteDocumentFilesByDocumentId(documentId, documentPin, documentType, user) {
+  try {
+    // Check if there is no document id or document type
+    if (!documentId || !documentType) throw { code: 400, message: 'Please provide document id, and document type' };
+
+    // Build table name and key name
+    let tableName = null;
+    let documentKeyName = null;
+
+    if (documentType == 'post') {
+      tableName = 'post_files';
+      documentKeyName = 'post_id';
+    } else if (documentType == 'comment') {
+      tableName = 'comment_files';
+      documentKeyName = 'comment_id';
+    } else throw { code: 400, message: 'Unsupported file url document type' };
+
+    // Get files url
+    const queryFiles = await db.query(`select * from ${tableName} where ${documentKeyName}=$1`, [documentId]);
+    logger.debug({ label: `query ${documentType}'s file url response`, results: queryFiles.rows });
+
+    // Delete files from local server
+    queryFiles.rows.forEach(async (item) => {
+      await fs.unlinkSync(`${path.resolve(__dirname, '../public')}${item.file_url}`);
+    });
+
+    // Delete files from db
+    const queryResults = await db.query(`delete from ${tableName} where ${documentKeyName}=$1`, [documentId]);
+    logger.debug({ label: `delete a ${documentType}'s file url response`, results: queryResults.rows });
+
+    return { message: 'Deleted document files by post/comment id successfully' };
+  } catch (error) {
+    console.log(error);
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not delete document file url by post/comment id';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
 module.exports = {
   uploadFile,
   uploadFileLocally,
   addDocumentFileUrl,
   deleteDocumentFileUrlById,
   deleteDocumentFileUrlByUrl,
-  deleteDocumentFileUrlByDocumentId,
+  deleteDocumentFilesByDocumentId,
   getDocumentFileUrlByDocumentId
 };

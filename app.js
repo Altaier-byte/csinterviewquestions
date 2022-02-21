@@ -72,6 +72,7 @@ app.listen(serverPort, serverUrl, function () {
 
 process.on('unhandledRejection', (reason, promise) => {
   console.log(reason);
+  console.log(promise);
 });
 
 process.on('uncaughtException', (reason) => {

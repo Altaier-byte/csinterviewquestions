@@ -3,6 +3,7 @@ const router = express.Router();
 const { logger } = require('../src/logger');
 const authorizationSrc = require('../src/authorizationSrc');
 const fileSrc = require('../src/fileSrc');
+const postSrc = require('../src/postSrc');
 
 /**
  * Custom function to call src file
@@ -60,7 +61,19 @@ router.get('/files/post/:postId', async (req, res) => {
 router.delete('/files/post/:postId', async (req, res) => {
   const { postId } = req.params;
   const { postPin } = req.body;
-  callSrcFile('deleteDocumentFileUrlByDocumentId', [postId, postPin, 'post'], req, res, true);
+
+  // Verify post pin
+  const verifyResults = await postSrc.verifyPostPin(postId, postPin);
+  if (!verifyResults) {
+    res.status(401).json({
+      error: {
+        code: 401,
+        message: 'Pin and did not match'
+      }
+    });
+  } else {
+    callSrcFile('deleteDocumentFilesByDocumentId', [postId, postPin, 'post'], req, res, true);
+  }
 });
 
 module.exports = router;

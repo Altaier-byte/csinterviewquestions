@@ -166,6 +166,11 @@ const verifyPostPin = async function verifyPostPin(postId, postPin) {
     if (!validatePin) throw { code: 401, message: 'Please check pin and post' };
     else return true;
   } catch (error) {
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      return false;
+    }
+
     const userMsg = 'Could not run post pin verification, returning false';
     logger.error({ userMsg, error });
     return false;
@@ -215,14 +220,11 @@ const deletePost = async function deletePost(postId, postPin, user) {
   try {
     if (!postId || !postPin) throw { code: 400, message: 'Please provide a post id and it\'s admin pin' };
 
-    // Get post
-    const postDb = await getPost(postId);
-    if (!postDb) throw { code: 404, message: 'Could not find requested post' };
+    // Verify post pin
+    const verifyPin = await verifyPostPin(postId, postPin);
+    if (!verifyPin) throw { code: 401, message: 'Please check pin and post' };
 
-    // Compare post pin to the pin
-    const postHash = postDb.pin;
-    const validatePin = bcrypt.compare(postPin, postHash);
-    if (!validatePin) throw { code: 401, message: 'Please check pin and post' };
+    await fileSrc.deleteDocumentFilesByDocumentId(postId, postPin, 'post');
 
     // Delete post
     const setPostDb = await setPostStatus(postId, 'deleted');
@@ -259,7 +261,7 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
     if (!postId || !postPin) throw { code: 400, message: 'Please provide a post id and it\'s admin pin' };
 
     // Verify post pin
-    const verifyPin = verifyPostPin(postId, postPin);
+    const verifyPin = await verifyPostPin(postId, postPin);
     if (!verifyPin) throw { code: 401, message: 'Please check pin and post' };
 
     // Clean language
