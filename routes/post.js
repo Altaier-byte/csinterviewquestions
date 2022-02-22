@@ -88,6 +88,14 @@ router.put('/posts', async (req, res) => {
 });
 
 /**
+ * @summary Update a post's attachments
+ */
+router.put('/posts/:postId/:postPin/attachments', async (req, res) => {
+  const { postId, postPin } = req.params;
+  callSrcFile('modifyPostAttachments', [postId, postPin, req], req, res, true);
+});
+
+/**
  * @summary Get all posts
  */
 router.post('/posts/all', async (req, res) => {

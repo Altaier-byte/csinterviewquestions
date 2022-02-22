@@ -72,7 +72,7 @@ router.delete('/files/post/:postId', async (req, res) => {
       }
     });
   } else {
-    callSrcFile('deleteDocumentFilesByDocumentId', [postId, postPin, 'post'], req, res, true);
+    callSrcFile('deleteDocumentFilesByDocumentId', [postId, 'post'], req, res, true);
   }
 });
 

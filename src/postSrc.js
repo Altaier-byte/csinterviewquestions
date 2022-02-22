@@ -329,6 +329,64 @@ const modifyPost = async function modifyPost(postId, postPin, title, interviewDa
 };
 
 /**
+ * @function modifyPostAttachments
+ * @summary Update post files by post id
+ * @param {number} postId Post id
+ * @param {string} postPin Post management password
+ * @param {object} req Http request
+ * @param {object} user User's information
+ * @returns {object} updatePostAttachmentsResults
+ * @throws {object} errorCodeAndMsg
+ */
+const modifyPostAttachments = async function modifyPostAttachments(postId, postPin, req, user) {
+  let fileUrl = '';
+  try {
+    // Check if there is no document id or document type
+    if (!postId || !postPin) throw { code: 400, message: 'Please provide post id, and post management password.' };
+
+    // Verify post pin
+    const verifyPin = await verifyPostPin(postId, postPin);
+    if (!verifyPin) throw { code: 401, message: 'Please check pin and post' };
+
+    // Upload post's attached file locally
+    const uploadFileResults = await fileSrc.uploadFileLocally(req, 'posts');
+    req = uploadFileResults.req;
+    fileUrl = uploadFileResults.fileUrl ? uploadFileResults.fileUrl : '';
+
+    // Get files url
+    const queryFiles = await db.query('select * from post_files where post_id=$1', [postId]);
+    logger.debug({ label: 'query post attachments files response', results: queryFiles.rows });
+
+    // Delete files from local server
+    queryFiles.rows.forEach(async (item) => {
+      await fs.unlinkSync(`${path.resolve(__dirname, '../public')}${item.file_url}`);
+    });
+
+    // Delete files from db
+    const queryResults = await db.query('delete from post_files where post_id=$1', [postId]);
+    logger.debug({ label: 'delete post attachments files response', results: queryResults.rows });
+
+    // Add post and file in the database
+    let addDocumentFileUrlResults = {};
+    if (uploadFileResults.fileUrl) {
+      addDocumentFileUrlResults = await fileSrc.addDocumentFileUrl(postId, uploadFileResults.fileUrl, 'post');
+    }
+
+    return { message: 'Post attachments updated successfully', results: addDocumentFileUrlResults };
+  } catch (error) {
+    if (fileUrl) fs.unlinkSync(`${path.resolve(__dirname, '../public')}${fileUrl}`);
+
+    if (error.code && isHttpErrorCode(error.code)) {
+      logger.error(error);
+      throw error;
+    }
+    const userMsg = 'Could not delete document file url by post/comment id';
+    logger.error({ userMsg, error });
+    throw { code: 500, message: userMsg };
+  }
+};
+
+/**
  * @function getAllPostsExternal
  * @summary Get all posts from database
  * @param {string} sortKey Sort key (create_date, interview_date or views)
@@ -541,6 +599,7 @@ module.exports = {
   deletePost,
   getPostExternal,
   modifyPost,
+  modifyPostAttachments,
   getAllPostsExternal,
   getAllCompanyPostsExternal,
   getAllPositionPostsExternal,

@@ -264,13 +264,12 @@ const getDocumentFileUrlByDocumentId = async function getDocumentFileUrlByDocume
  * @function deleteDocumentFilesByDocumentId
  * @summary Delete post/comment's file url by its post/comment id
  * @param {number} documentId Post/comment's id
- * @param {string} documentPin Document management pin
  * @param {string} documentType Document type post vs comment
  * @param {object} user User's information
  * @returns {object} deleteFileResults
- * @throws {boolean} false
+ * @throws {object} errorCodeAndMsg
  */
-const deleteDocumentFilesByDocumentId = async function deleteDocumentFilesByDocumentId(documentId, documentPin, documentType, user) {
+const deleteDocumentFilesByDocumentId = async function deleteDocumentFilesByDocumentId(documentId, documentType, user) {
   try {
     // Check if there is no document id or document type
     if (!documentId || !documentType) throw { code: 400, message: 'Please provide document id, and document type' };
@@ -302,7 +301,6 @@ const deleteDocumentFilesByDocumentId = async function deleteDocumentFilesByDocu
 
     return { message: 'Deleted document files by post/comment id successfully' };
   } catch (error) {
-    console.log(error);
     if (error.code && isHttpErrorCode(error.code)) {
       logger.error(error);
       throw error;
@@ -319,6 +317,6 @@ module.exports = {
   addDocumentFileUrl,
   deleteDocumentFileUrlById,
   deleteDocumentFileUrlByUrl,
-  deleteDocumentFilesByDocumentId,
-  getDocumentFileUrlByDocumentId
+  getDocumentFileUrlByDocumentId,
+  deleteDocumentFilesByDocumentId
 };
