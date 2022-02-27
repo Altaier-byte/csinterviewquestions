@@ -25,14 +25,16 @@ GRANT TEMPORARY, CONNECT ON DATABASE csinterviewquestions TO PUBLIC;
 
 -- DROP TABLE public.users;
 
-CREATE TABLE IF NOT EXISTS public.users
-(
-    email text COLLATE pg_catalog."default" NOT NULL,
-    ip inet NOT NULL,
-    banned boolean NOT NULL DEFAULT false,
-    refresh_token text COLLATE pg_catalog."default",
-    CONSTRAINT users_email_pk PRIMARY KEY (email)
-)
+CREATE TABLE public.users (
+	email text NOT NULL,
+	banned bool NOT NULL DEFAULT false,
+	refresh_token text NULL,
+	ip _inet NOT NULL,
+	pin text NULL,
+	username text NOT NULL,
+	CONSTRAINT users_email_pk PRIMARY KEY (email),
+	CONSTRAINT users_username_uq UNIQUE (username)
+);
 
 TABLESPACE pg_default;
 
@@ -44,22 +46,21 @@ ALTER TABLE public.users
 
 -- DROP TABLE public.posts;
 
-CREATE TABLE IF NOT EXISTS public.posts
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    title text COLLATE pg_catalog."default" NOT NULL,
-    create_date date NOT NULL,
-    interview_date date NOT NULL,
-    company text COLLATE pg_catalog."default" NOT NULL,
-    body text COLLATE pg_catalog."default",
-    "position" text COLLATE pg_catalog."default" NOT NULL,
-    votes_up integer NOT NULL DEFAULT 0,
-    votes_down integer NOT NULL DEFAULT 0,
-    views integer,
-    status text COLLATE pg_catalog."default" NOT NULL,
-    pin text COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT posts_id_pk PRIMARY KEY (id)
-)
+CREATE TABLE public.posts (
+	id int4 NOT NULL GENERATED ALWAYS AS IDENTITY,
+	title text NOT NULL,
+	create_date date NOT NULL,
+	interview_date date NOT NULL,
+	company text NOT NULL,
+	body text NULL,
+	"position" text NOT NULL,
+	votes_up int4 NOT NULL DEFAULT 0,
+	votes_down int4 NOT NULL DEFAULT 0,
+	"views" int4 NOT NULL DEFAULT 0,
+	status text NOT NULL,
+	pin text NOT NULL,
+	CONSTRAINT posts_id_pk PRIMARY KEY (id)
+);
 
 TABLESPACE pg_default;
 
@@ -71,21 +72,17 @@ ALTER TABLE public.posts
 
 -- DROP TABLE public.post_reports;
 
-CREATE TABLE IF NOT EXISTS public.post_reports
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    post_id integer NOT NULL,
-    body text COLLATE pg_catalog."default" NOT NULL,
-    create_date date NOT NULL,
-    status text COLLATE pg_catalog."default" NOT NULL,
-    email text COLLATE pg_catalog."default" NOT NULL,
-    ip inet NOT NULL,
-    CONSTRAINT post_reports_id_pk PRIMARY KEY (id),
-    CONSTRAINT post_report_post_id_fk FOREIGN KEY (post_id)
-        REFERENCES public.posts (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
+CREATE TABLE public.post_reports (
+	id int4 NOT NULL GENERATED ALWAYS AS IDENTITY,
+	post_id int4 NOT NULL,
+	body text NOT NULL,
+	create_date date NOT NULL,
+	status text NOT NULL,
+	email text NOT NULL,
+	ip inet NOT NULL,
+	CONSTRAINT post_reports_id_pk PRIMARY KEY (id),
+	CONSTRAINT post_report_post_id_fk FOREIGN KEY (post_id) REFERENCES public.posts(id)
+);
 
 TABLESPACE pg_default;
 
@@ -93,27 +90,43 @@ ALTER TABLE public.post_reports
     OWNER to postgres;
 
 -----------------------------------------
+-- Table: public.post_files
+
+-- DROP TABLE public.post_files;
+
+CREATE TABLE public.post_files (
+	id int4 NOT NULL GENERATED ALWAYS AS IDENTITY,
+	post_id int4 NOT NULL,
+	file_url text NOT NULL,
+	CONSTRAINT post_files_file_url_uq UNIQUE (file_url),
+	CONSTRAINT post_files_id_pk PRIMARY KEY (id),
+	CONSTRAINT post_files_post_id_fk FOREIGN KEY (post_id) REFERENCES public.posts(id)
+);
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.post_files
+    OWNER to postgres;
+
+-----------------------------------------
 -- Table: public.comments
 
 -- DROP TABLE public.comments;
 
-CREATE TABLE IF NOT EXISTS public.comments
-(
-    id integer NOT NULL,
-    post_id integer NOT NULL,
-    create_date date NOT NULL,
-    body text COLLATE pg_catalog."default" NOT NULL,
-    solution boolean NOT NULL DEFAULT false,
-    votes_up integer NOT NULL DEFAULT 0,
-    votes_down integer NOT NULL DEFAULT 0,
-    status text COLLATE pg_catalog."default" NOT NULL,
-    pin text COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT comments_id_pk PRIMARY KEY (id),
-    CONSTRAINT comments_post_id_fk FOREIGN KEY (post_id)
-        REFERENCES public.posts (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
+CREATE TABLE public."comments" (
+	id int4 NOT NULL GENERATED ALWAYS AS IDENTITY,
+	post_id int4 NOT NULL,
+	create_date date NOT NULL,
+	body text NOT NULL,
+	solution bool NOT NULL DEFAULT false,
+	votes_up int4 NOT NULL DEFAULT 0,
+	votes_down int4 NOT NULL DEFAULT 0,
+	status text NOT NULL,
+	username text NOT NULL,
+	CONSTRAINT comments_id_pk PRIMARY KEY (id),
+	CONSTRAINT comments_post_id_fk FOREIGN KEY (post_id) REFERENCES public.posts(id),
+	CONSTRAINT comments_username_fk FOREIGN KEY (username) REFERENCES public.users(username)
+);
 
 TABLESPACE pg_default;
 
@@ -125,21 +138,17 @@ ALTER TABLE public.comments
 
 -- DROP TABLE public.comment_reports;
 
-CREATE TABLE IF NOT EXISTS public.comment_reports
-(
-    id integer NOT NULL,
-    comment_id integer NOT NULL,
-    body text COLLATE pg_catalog."default" NOT NULL,
-    create_date date NOT NULL,
-    status text COLLATE pg_catalog."default" NOT NULL,
-    email text COLLATE pg_catalog."default" NOT NULL,
-    ip inet NOT NULL,
-    CONSTRAINT comment_report_id_pk PRIMARY KEY (id),
-    CONSTRAINT comment_report_comment_id_fk FOREIGN KEY (comment_id)
-        REFERENCES public.comments (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
+CREATE TABLE public.comment_reports (
+	id int4 NOT NULL,
+	comment_id int4 NOT NULL,
+	body text NOT NULL,
+	create_date date NOT NULL,
+	status text NOT NULL,
+	email text NOT NULL,
+	ip inet NOT NULL,
+	CONSTRAINT comment_report_id_pk PRIMARY KEY (id),
+	CONSTRAINT comment_report_comment_id_fk FOREIGN KEY (comment_id) REFERENCES public."comments"(id)
+);
 
 TABLESPACE pg_default;
 
@@ -151,19 +160,14 @@ ALTER TABLE public.comment_reports
 
 -- DROP TABLE public.comment_files;
 
-CREATE TABLE IF NOT EXISTS public.comment_files
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    comment_id integer NOT NULL,
-    create_date date NOT NULL,
-    original_file_name text COLLATE pg_catalog."default" NOT NULL,
-    ip inet NOT NULL,
-    CONSTRAINT comment_files_id_pk PRIMARY KEY (id),
-    CONSTRAINT comment_files_comment_id_fk FOREIGN KEY (comment_id)
-        REFERENCES public.comments (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
+CREATE TABLE public.comment_files (
+	id int4 NOT NULL GENERATED ALWAYS AS IDENTITY,
+	comment_id int4 NOT NULL,
+	file_url text NOT NULL,
+	CONSTRAINT comment_files_file_url_uq UNIQUE (file_url),
+	CONSTRAINT comment_files_id_pk PRIMARY KEY (id),
+	CONSTRAINT comment_files_comment_id_fk FOREIGN KEY (comment_id) REFERENCES public."comments"(id)
+);
 
 TABLESPACE pg_default;
 
